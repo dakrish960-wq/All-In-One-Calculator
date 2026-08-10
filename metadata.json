@@ -1,0 +1,6 @@
+{
+  "name": "All In One Calculator",
+  "description": "A modern, fast, offline-first multi-calculator suite with Age, Gold, Viral Social Media, Weight/BMI, Currency, Love, and Standard Calculators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
