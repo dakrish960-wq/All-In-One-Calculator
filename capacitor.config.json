@@ -1,0 +1,6 @@
+{
+  "appId": "com.calculator.app",
+  "appName": "All In One Calculator",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
