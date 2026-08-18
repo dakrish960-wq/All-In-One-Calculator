@@ -1,0 +1,87 @@
+name: Android CI - Build AAB
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build Android AAB
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20'
+      JAVA_VERSION: '17'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets (Vite)
+        run: npm run build
+
+      - name: Install Android SDK
+        uses: r0adkll/setup-android@v2
+        with:
+          api-level: 33
+          build-tools: 33.0.2
+
+      - name: Ensure Capacitor CLI is available
+        run: npx cap --version || npm install @capacitor/cli @capacitor/core --no-save
+
+      - name: Add / Sync Android project (idempotent)
+        run: |
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Prepare keystore (if provided)
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "Decoding keystore and writing android/keystore.properties"
+          echo "$KEYSTORE_BASE64" | base64 --decode > keystore.jks
+          mkdir -p android
+          cat > android/keystore.properties <<EOF
+storeFile=$(pwd)/keystore.jks
+storePassword=${KEYSTORE_PASSWORD}
+keyAlias=${KEY_ALIAS}
+keyPassword=${KEY_PASSWORD}
+EOF
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Build Android AAB
+        working-directory: android
+        run: |
+          chmod +x ./gradlew || true
+          ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+
+      - name: Upload APK artifact (release if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
