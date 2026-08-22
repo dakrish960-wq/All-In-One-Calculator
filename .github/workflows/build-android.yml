@@ -31,13 +31,12 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Build web assets (Vite)
         run: npm run build
-
-      - name: Ensure Capacitor CLI is available
-        run: npx cap --version || npm install @capacitor/cli @capacitor/core --no-save
 
       - name: Add / Sync Android project
         run: |
