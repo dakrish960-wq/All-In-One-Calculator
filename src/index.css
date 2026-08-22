@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 * {
   margin: 0;
   padding: 0;
@@ -22,7 +24,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
 }
 
