@@ -1,9 +1,11 @@
+/* App Container Styles */
 .app-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 30px;
   padding: 20px;
+  min-height: 100vh;
 }
 
 .app-container h1 {
@@ -13,13 +15,40 @@
   margin-bottom: 10px;
 }
 
-@media (max-width: 480px) {
+/* Responsive Design */
+@media (max-width: 768px) {
+  .app-container {
+    gap: 20px;
+    padding: 15px;
+  }
+
   .app-container h1 {
     font-size: 1.8em;
   }
+}
 
-  .calculator {
-    width: 100% !important;
-    max-width: 320px;
+@media (max-width: 480px) {
+  .app-container h1 {
+    font-size: 1.5em;
   }
+}
+
+/* Main content area */
+main {
+  width: 100%;
+  background: transparent;
+}
+
+/* Dark theme support */
+:root {
+  color-scheme: light dark;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
