@@ -9,7 +9,6 @@ import { WeightCalculator } from './components/WeightCalculator'
 import { CurrencyCalculator } from './components/CurrencyCalculator'
 import { LoveCalculator } from './components/LoveCalculator'
 import { SettingsModal } from './components/SettingsModal'
-import { PromptModal } from './components/PromptModal'
 import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import './App.css'
 
@@ -18,13 +17,12 @@ function App() {
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [activeTab, setActiveTab] = useState<CalculatorType>('standard')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [isPromptOpen, setIsPromptOpen] = useState(false)
   const [startIoConfig, setStartIoConfig] = useState<StartIoConfig>({
-    appId: '208473910',
+    appId: '206473031',
     enabled: true,
     showBanner: true,
     showInterstitialOnSwitch: true,
-    testMode: true,
+    testMode: false,
   })
 
   return (
@@ -35,7 +33,6 @@ function App() {
         theme={theme}
         setTheme={setTheme}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenPromptModal={() => setIsPromptOpen(true)}
       />
       
       <main className="max-w-7xl mx-auto px-4 py-6 pb-24">
@@ -65,12 +62,6 @@ function App() {
         setTheme={setTheme}
         startIoConfig={startIoConfig}
         setStartIoConfig={setStartIoConfig}
-      />
-
-      <PromptModal
-        isOpen={isPromptOpen}
-        onClose={() => setIsPromptOpen(false)}
-        lang={lang}
       />
     </div>
   )
