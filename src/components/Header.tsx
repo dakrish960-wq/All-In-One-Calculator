@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, Globe, Moon, Sun, Settings, Code, WifiOff } from 'lucide-react';
+import { Calculator, Globe, Moon, Sun, Settings, WifiOff } from 'lucide-react';
 import { Language, ThemeMode } from '../types';
 import { translations } from '../data/translations';
 
@@ -9,7 +9,6 @@ interface HeaderProps {
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
   onOpenSettings: () => void;
-  onOpenPromptModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,7 +17,6 @@ export const Header: React.FC<HeaderProps> = ({
   theme,
   setTheme,
   onOpenSettings,
-  onOpenPromptModal,
 }) => {
   const t = translations[lang];
 
@@ -48,16 +46,6 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Header Actions */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Prompt Generator / Prompt Modal Button */}
-          <button
-            onClick={onOpenPromptModal}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/80 border border-indigo-200/60 dark:border-indigo-800/60 transition-all cursor-pointer"
-            title="View English Prompt & Prompt Specifications"
-          >
-            <Code className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">{t.playStorePrompt}</span>
-          </button>
-
           {/* Language Switcher */}
           <button
             onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
