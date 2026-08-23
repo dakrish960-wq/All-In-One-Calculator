@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, ShieldCheck, CheckCircle2, Smartphone, Radio, Globe, Moon, Sun, Lock, ExternalLink, FileText } from 'lucide-react';
+      import React from 'react';
+import { X, ShieldCheck, CheckCircle2, Smartphone, Radio, Lock, ExternalLink, FileText } from 'lucide-react';
 import { Language, ThemeMode, StartIoConfig } from '../types';
 import { translations } from '../data/translations';
 
@@ -18,9 +18,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
   lang,
-  setLang,
-  theme,
-  setTheme,
   startIoConfig,
   setStartIoConfig,
 }) => {
@@ -30,29 +27,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50">
+        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 shrink-0">
           <div className="flex items-center gap-2">
             <Smartphone className="w-5 h-5 text-emerald-500" />
-            <h3 className="font-bold text-slate-900 dark:text-white text-lg">
+            <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg">
               {t.settings} & Play Store Info
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 space-y-6 overflow-y-auto">
+        {/* Content Body - Fully Scrollable */}
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           {/* App Metadata */}
-          <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800/80 space-y-2">
+          <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800/80 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
                 App & Package Identification
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200">
@@ -68,7 +65,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Start.io Ad Configuration */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Radio className="w-4 h-4 text-indigo-500" />
@@ -93,41 +90,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </label>
               <input
                 type="text"
-                value={startIoConfig.appId}
+                value={startIoConfig.appId || '206473031'}
                 onChange={(e) =>
                   setStartIoConfig({ ...startIoConfig, appId: e.target.value })
                 }
-                placeholder="e.g. 206473031"
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-white"
+                placeholder="206473031"
+                className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 outline-none"
               />
             </div>
           </div>
 
           {/* Play Store Compliance Checklist */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
               {t.playStorePolicyCheck}
             </span>
 
-            <div className="space-y-2 text-xs">
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
+            <div className="space-y-1.5 text-xs">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Package Name formatted correctly: <strong>com.calculator.app</strong></span>
+                <span>Package Name: <strong>com.calculator.app</strong></span>
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Runs 100% offline without mandatory login or external API dependencies.</span>
+                <span>Runs 100% offline without external dependencies.</span>
               </div>
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-800/40 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Compliant with Google Play Data Safety policy & Start.io Ad guidelines.</span>
+                <span>Compliant with Google Play & Start.io guidelines.</span>
               </div>
             </div>
           </div>
 
           {/* Privacy Policy Link & Summary */}
-          <div className="p-4 bg-slate-100 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs space-y-3">
+          <div className="p-3.5 bg-slate-100 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-emerald-500" />
@@ -137,24 +134,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 href="https://docs.google.com/document/d/1WE176kjz7U1MgTzbevyo5TntbPuAQVeXIEj0CTkVqCA/edit?usp=drivesdk"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition cursor-pointer"
               >
-                <FileText className="w-3.5 h-3.5" />
-                Open Privacy Policy
-                <ExternalLink className="w-3 h-3" />
+                <FileText className="w-3 h-3" />
+                Open Policy
+                <ExternalLink className="w-2.5 h-2.5" />
               </a>
             </div>
             <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
-              This app (com.calculator.app) operates locally on your device. We do not collect, store, or transmit personal data or calculation logs to external servers. All currency rates and calculations remain stored strictly in local device memory.
+              This app processes data locally on device and does not collect or transmit personal calculation logs.
             </p>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+        {/* Footer Action - Fixed Bottom */}
+        <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex justify-end shrink-0">
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer"
+            className="w-full sm:w-auto px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-md shadow-emerald-600/20"
           >
             Done
           </button>
@@ -162,4 +159,4 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
     </div>
   );
-};
+};          
