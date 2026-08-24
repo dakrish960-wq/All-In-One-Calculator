@@ -9,6 +9,7 @@ import { WeightCalculator } from './components/WeightCalculator'
 import { CurrencyCalculator } from './components/CurrencyCalculator'
 import { LoveCalculator } from './components/LoveCalculator'
 import { SettingsModal } from './components/SettingsModal'
+import { AdBanner } from './components/AdBanner'
 import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import './App.css'
 
@@ -45,6 +46,9 @@ function App() {
           {activeTab === 'currency' && <CurrencyCalculator lang={lang} />}
           {activeTab === 'love' && <LoveCalculator lang={lang} />}
         </div>
+
+        {/* Start.io Ad Banner Component */}
+        <AdBanner config={startIoConfig} lang={lang} />
 
         <footer className="mt-6 mb-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-1.5 text-center">
           <div className="flex items-center gap-2">
