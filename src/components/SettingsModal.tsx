@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, ShieldCheck, Share2, Star, ExternalLink, Check } from 'lucide-react';
+   import React, { useState } from 'react';
+import { X, ShieldCheck, Share2, ExternalLink, Check } from 'lucide-react';
 import { Language, ThemeMode, StartIoConfig } from '../types';
 
 interface SettingsModalProps {
@@ -21,21 +21,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const appShareUrl = 'https://play.google.com/store/apps/details?id=com.calculator.app';
-
   const handleShare = async () => {
+    const shareData = {
+      title: 'All In One Calculator',
+      text: 'Check out this awesome All In One Calculator App!',
+    };
+
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'All In One Calculator',
-          text: 'Check out this awesome All In One Calculator App!',
-          url: appShareUrl,
-        });
+        await navigator.share(shareData);
       } catch (err) {
         console.log('Error sharing:', err);
       }
     } else {
-      navigator.clipboard.writeText(appShareUrl);
+      navigator.clipboard.writeText(`${shareData.title} - ${shareData.text}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -75,7 +74,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
               <div className="text-left">
                 <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
-                  {copied ? 'Link Copied!' : 'Share App'}
+                  {copied ? 'Copied!' : 'Share App'}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
                   Share this app with your friends
@@ -87,32 +86,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </span>
           </button>
 
-          {/* Rate Us Option */}
-          <a
-            href={appShareUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full p-3.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/80 rounded-xl flex items-center justify-between transition cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500 text-white rounded-lg group-hover:scale-105 transition">
-                <Star className="w-4 h-4 fill-current" />
-              </div>
-              <div className="text-left">
-                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
-                  Rate Us
-                </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Give us 5 stars on Play Store
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-              Rate
-            </span>
-          </a>
-
-          {/* Privacy Policy */}
+          {/* Privacy Policy Link */}
           <a
             href="https://docs.google.com/document/d/1WE176kjz7U1MgTzbevyo5TntbPuAQVeXIEj0CTkVqCA/edit?usp=drivesdk"
             target="_blank"
@@ -150,4 +124,4 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
     </div>
   );
-};                
+};         
