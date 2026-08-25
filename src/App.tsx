@@ -14,7 +14,8 @@ import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import './App.css'
 
 function App() {
-  const [lang, setLang] = useState<Language>('bn')
+  // ১. অ্যাপ ওপেন করার সময় ডিফল্ট ভাষা ইংরেজি ('en')
+  const [lang, setLang] = useState<Language>('en')
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [activeTab, setActiveTab] = useState<CalculatorType>('standard')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -27,7 +28,7 @@ function App() {
   })
 
   return (
-    <div className={theme === 'dark' ? 'dark bg-slate-950 text-slate-100 min-h-screen flex flex-col' : 'bg-slate-100 text-slate-900 min-h-screen flex flex-col'}>
+    <div className={theme === 'dark' ? 'dark bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans' : 'bg-slate-100 text-slate-900 min-h-screen flex flex-col font-sans'}>
       <Header 
         lang={lang} 
         setLang={setLang}
@@ -36,8 +37,8 @@ function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
       
-      {/* Main Content Scrollable Area */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-3 sm:px-4 pt-3 pb-36 overflow-y-auto space-y-4">
+      {/* ২. লেআউট ফিক্স: সাইডের স্পেসিং ঠিক রাখতে max-w-xl ও px-4 ব্যবহার করা হয়েছে */}
+      <main className="flex-1 max-w-xl w-full mx-auto px-4 sm:px-6 pt-4 pb-36 overflow-y-auto space-y-4">
         <div className="w-full">
           {activeTab === 'standard' && <StandardCalculator lang={lang} />}
           {activeTab === 'age' && <AgeCalculator lang={lang} />}
@@ -49,10 +50,12 @@ function App() {
         </div>
 
         {/* Start.io Ad Banner Component */}
-        <AdBanner config={startIoConfig} lang={lang} />
+        <div className="my-2">
+          <AdBanner config={startIoConfig} lang={lang} />
+        </div>
 
         {/* Footer Info */}
-        <footer className="mt-6 mb-2 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-1.5 text-center">
+        <footer className="mt-6 mb-2 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-1.5 text-center px-2">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-700 dark:text-slate-300">com.calculator.app</span>
             <span>•</span>
@@ -78,9 +81,9 @@ function App() {
         </footer>
       </main>
 
-      {/* Fixed Bottom Single Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-2 px-2 shadow-2xl">
-        <div className="max-w-2xl mx-auto">
+      {/* ৩. একক নেভিগেশন বার */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-2 px-3 shadow-2xl">
+        <div className="max-w-xl mx-auto">
           <Navigation 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
