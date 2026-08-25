@@ -27,7 +27,7 @@ function App() {
 
   return (
     <div className={theme === 'dark' ? 'dark bg-slate-950 text-slate-100 h-screen flex flex-col font-sans overflow-hidden' : 'bg-slate-100 text-slate-900 h-screen flex flex-col font-sans overflow-hidden'}>
-      {/* Header */}
+      {/* 1. Header Area */}
       <Header 
         lang={lang} 
         setLang={setLang}
@@ -36,8 +36,8 @@ function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
       
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-3 pb-4 overflow-y-auto space-y-4">
+      {/* 2. Main Content Area */}
+      <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-3 pb-2 overflow-y-auto space-y-4">
         <div className="w-full">
           {activeTab === 'standard' && <StandardCalculator lang={lang} />}
           {activeTab === 'age' && <AgeCalculator lang={lang} />}
@@ -48,8 +48,8 @@ function App() {
           {activeTab === 'love' && <LoveCalculator lang={lang} />}
         </div>
 
-        {/* Clean 1-Line Privacy Policy Link */}
-        <div className="pt-2 pb-6 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-3 text-center">
+        {/* Clean Single Line Privacy Policy & Settings */}
+        <div className="pt-2 pb-4 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-3 text-center">
           <a
             href="https://docs.google.com/document/d/1WE176kjz7U1MgTzbevyo5TntbPuAQVeXIEj0CTkVqCA/edit?usp=drivesdk"
             target="_blank"
@@ -68,7 +68,7 @@ function App() {
         </div>
       </main>
 
-      {/* Single Navigation Bar */}
+      {/* 3. Single Navigation Bar at Bottom */}
       <div className="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-1 shadow-lg z-50">
         <div className="max-w-lg mx-auto px-2">
           <Navigation 
