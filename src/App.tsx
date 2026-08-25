@@ -36,7 +36,8 @@ function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
       
-      <main className="flex-1 max-w-2xl w-full mx-auto px-3 sm:px-4 pt-3 pb-32 overflow-y-auto space-y-4">
+      {/* Main Content Scrollable Area */}
+      <main className="flex-1 max-w-2xl w-full mx-auto px-3 sm:px-4 pt-3 pb-36 overflow-y-auto space-y-4">
         <div className="w-full">
           {activeTab === 'standard' && <StandardCalculator lang={lang} />}
           {activeTab === 'age' && <AgeCalculator lang={lang} />}
@@ -50,7 +51,8 @@ function App() {
         {/* Start.io Ad Banner Component */}
         <AdBanner config={startIoConfig} lang={lang} />
 
-        <footer className="mt-6 mb-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-1.5 text-center">
+        {/* Footer Info */}
+        <footer className="mt-6 mb-2 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-1.5 text-center">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-slate-700 dark:text-slate-300">com.calculator.app</span>
             <span>•</span>
@@ -76,7 +78,8 @@ function App() {
         </footer>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-1.5 px-2 shadow-lg">
+      {/* Fixed Bottom Single Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-2 px-2 shadow-2xl">
         <div className="max-w-2xl mx-auto">
           <Navigation 
             activeTab={activeTab}
