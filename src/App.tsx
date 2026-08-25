@@ -9,12 +9,10 @@ import { WeightCalculator } from './components/WeightCalculator'
 import { CurrencyCalculator } from './components/CurrencyCalculator'
 import { LoveCalculator } from './components/LoveCalculator'
 import { SettingsModal } from './components/SettingsModal'
-import { AdBanner } from './components/AdBanner'
 import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import './App.css'
 
 function App() {
-  // ১. অ্যাপ ওপেন করার সময় ডিফল্ট ভাষা ইংরেজি ('en')
   const [lang, setLang] = useState<Language>('en')
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [activeTab, setActiveTab] = useState<CalculatorType>('standard')
@@ -28,7 +26,8 @@ function App() {
   })
 
   return (
-    <div className={theme === 'dark' ? 'dark bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans' : 'bg-slate-100 text-slate-900 min-h-screen flex flex-col font-sans'}>
+    <div className={theme === 'dark' ? 'dark bg-slate-950 text-slate-100 h-screen flex flex-col font-sans overflow-hidden' : 'bg-slate-100 text-slate-900 h-screen flex flex-col font-sans overflow-hidden'}>
+      {/* Header */}
       <Header 
         lang={lang} 
         setLang={setLang}
@@ -37,8 +36,8 @@ function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
       
-      {/* ২. লেআউট ফিক্স: সাইডের স্পেসিং ঠিক রাখতে max-w-xl ও px-4 ব্যবহার করা হয়েছে */}
-      <main className="flex-1 max-w-xl w-full mx-auto px-4 sm:px-6 pt-4 pb-36 overflow-y-auto space-y-4">
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-3 pb-4 overflow-y-auto space-y-4">
         <div className="w-full">
           {activeTab === 'standard' && <StandardCalculator lang={lang} />}
           {activeTab === 'age' && <AgeCalculator lang={lang} />}
@@ -49,41 +48,29 @@ function App() {
           {activeTab === 'love' && <LoveCalculator lang={lang} />}
         </div>
 
-        {/* Start.io Ad Banner Component */}
-        <div className="my-2">
-          <AdBanner config={startIoConfig} lang={lang} />
+        {/* Clean 1-Line Privacy Policy Link */}
+        <div className="pt-2 pb-6 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-3 text-center">
+          <a
+            href="https://docs.google.com/document/d/1WE176kjz7U1MgTzbevyo5TntbPuAQVeXIEj0CTkVqCA/edit?usp=drivesdk"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-emerald-600 dark:hover:text-emerald-400 font-medium underline"
+          >
+            Privacy Policy
+          </a>
+          <span>•</span>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="hover:text-slate-900 dark:hover:text-slate-200 font-medium cursor-pointer"
+          >
+            Settings
+          </button>
         </div>
-
-        {/* Footer Info */}
-        <footer className="mt-6 mb-2 pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-1.5 text-center px-2">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">com.calculator.app</span>
-            <span>•</span>
-            <span>100% Offline Calculator</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="https://docs.google.com/document/d/1WE176kjz7U1MgTzbevyo5TntbPuAQVeXIEj0CTkVqCA/edit?usp=drivesdk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-emerald-600 dark:hover:text-emerald-400 font-medium underline"
-            >
-              Privacy Policy
-            </a>
-            <span>•</span>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="hover:text-slate-900 dark:hover:text-slate-200 font-medium cursor-pointer"
-            >
-              Settings
-            </button>
-          </div>
-        </footer>
       </main>
 
-      {/* ৩. একক নেভিগেশন বার */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 py-2 px-3 shadow-2xl">
-        <div className="max-w-xl mx-auto">
+      {/* Single Navigation Bar */}
+      <div className="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-1 shadow-lg z-50">
+        <div className="max-w-lg mx-auto px-2">
           <Navigation 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
