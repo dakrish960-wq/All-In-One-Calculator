@@ -1,4 +1,4 @@
-import React from 'react';
+ import React, { useEffect } from 'react';
 import { StartIoConfig, Language } from '../types';
 
 interface AdBannerProps {
@@ -7,22 +7,36 @@ interface AdBannerProps {
 }
 
 export const AdBanner: React.FC<AdBannerProps> = ({ config }) => {
+  const appId = config.appId || '206473031';
+
+  useEffect(() => {
+    if (!config.enabled || !config.showBanner) return;
+
+    // Load Start.io Official SDK Script dynamically
+    const scriptId = 'startio-sdk-script';
+    let script = document.getElementById(scriptId) as HTMLScriptElement;
+
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://cdn.startappservice.com/js/startapp-publisher-3.0.0.min.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, [config.enabled, config.showBanner]);
+
   if (!config.enabled || !config.showBanner) return null;
 
   return (
-    <div className="w-full max-w-lg mx-auto my-2 px-2">
-      <div className="relative overflow-hidden rounded-xl bg-slate-900 border border-slate-800 p-2 shadow-lg flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-500 text-slate-950 rounded">
-            AD
-          </span>
-          <span className="text-xs text-slate-300 font-medium">
-            Sponsored Ad Area
-          </span>
-        </div>
-        <span className="text-[10px] text-slate-500">
-          App ID: {config.appId}
-        </span>
+    <div className="w-full max-w-lg mx-auto my-2 px-2 flex justify-center items-center">
+      <div className="w-full min-h-[60px] bg-slate-900/80 border border-slate-800 rounded-xl p-1 flex items-center justify-center overflow-hidden">
+        {/* Start.io Official Live Web Banner Unit */}
+        <div 
+          className="startapp-ad" 
+          data-app-id={appId}
+          data-ad-type="banner"
+          style={{ width: '100%', minHeight: '50px', display: 'block' }}
+        ></div>
       </div>
     </div>
   );
