@@ -56,12 +56,12 @@ jobs:
 
           dependency = "implementation 'com.startapp:inapp-sdk:5.0.2'"
 
-          # Remove any automatically added Start.io dependency first
           lines = text.splitlines()
           lines = [
               line for line in lines
               if "com.startapp:inapp-sdk:" not in line
           ]
+
           text = "\n".join(lines) + "\n"
 
           if "dependencies {" not in text:
@@ -91,6 +91,7 @@ jobs:
           import com.getcapacitor.JSObject;
           import com.getcapacitor.Plugin;
           import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
           import com.getcapacitor.annotation.CapacitorPlugin;
 
           import com.startapp.sdk.adsbase.Ad;
