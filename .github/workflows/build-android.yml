@@ -16,44 +16,36 @@ jobs:
       STARTIO_APP_ID: '207279640'
 
     steps:
-      # 1. Download the GitHub project
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # 3. Java
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: ${{ env.JAVA_VERSION }}
 
-      # 4. Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 5. Install dependencies
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
           npm install @capacitor/core@^5.0.0 @capacitor/cli@^5.0.0 @capacitor/android@^5.0.0 --legacy-peer-deps
 
-      # 6. Build the web application
       - name: Build web assets
         run: npm run build
 
-      # 7. Create Android project
       - name: Add Android platform
         run: |
           npx cap add android
           npx cap sync android
 
-      # 8. Add Start.io SDK
       - name: Add Start.io SDK
         run: |
           python3 - <<'PY'
@@ -62,25 +54,29 @@ jobs:
           file = Path("android/app/build.gradle")
           text = file.read_text()
 
-          dependency = "implementation 'com.startapp:inapp-sdk:5.+'"
+          dependency = "implementation 'com.startapp:inapp-sdk:5.0.2'"
 
-          if dependency not in text:
-              if "dependencies {" not in text:
-                  raise SystemExit("Gradle dependencies block was not found.")
+          # Remove any automatically added Start.io dependency first
+          lines = text.splitlines()
+          lines = [
+              line for line in lines
+              if "com.startapp:inapp-sdk:" not in line
+          ]
+          text = "\n".join(lines) + "\n"
 
-              text = text.replace(
-                  "dependencies {",
-                  "dependencies {\n    " + dependency,
-                  1
-              )
+          if "dependencies {" not in text:
+              raise SystemExit("Gradle dependencies block was not found.")
+
+          text = text.replace(
+              "dependencies {",
+              "dependencies {\n    " + dependency,
+              1
+          )
 
           file.write_text(text)
           PY
 
-      # 9. Create Start.io Capacitor plugin
       - name: Create Start.io native plugin
-        env:
-          STARTIO_APP_ID: ${{ env.STARTIO_APP_ID }}
         run: |
           PACKAGE_DIR="android/app/src/main/java/com/calculator/app"
 
@@ -119,14 +115,11 @@ jobs:
                           .setCallback(new Runnable() {
                               @Override
                               public void run() {
-                                  // SDK is ready.
                                   loadInterstitialInternal();
                               }
                           })
                           .init();
 
-                  // Test ads are enabled during development.
-                  // This must be removed/disabled before production release.
                   StartAppSDK.setTestAdsEnabled(true);
               }
 
@@ -184,14 +177,12 @@ jobs:
                       result.put("shown", true);
                       call.resolve(result);
 
-                      // Load the next interstitial.
                       loadInterstitialInternal();
                   });
               }
           }
           JAVA
 
-      # 10. Register the native plugin in MainActivity
       - name: Register Start.io plugin
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
@@ -200,8 +191,6 @@ jobs:
             echo "MainActivity.java was not found."
             exit 1
           fi
-
-          echo "MainActivity found at: $MAIN_ACTIVITY"
 
           python3 - "$MAIN_ACTIVITY" <<'PY'
           import sys
@@ -239,7 +228,6 @@ jobs:
           file.write_text(text)
           PY
 
-      # 11. Create JavaScript bridge
       - name: Create Start.io JavaScript bridge
         run: |
           mkdir -p src/lib
@@ -262,19 +250,16 @@ jobs:
             registerPlugin<StartIoPlugin>('StartIo');
           EOF
 
-      # 12. Sync Capacitor after native changes
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
-      # 13. Build Debug APK
       - name: Build Android Debug APK
         working-directory: android
         run: |
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
-      # 14. Upload APK
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
