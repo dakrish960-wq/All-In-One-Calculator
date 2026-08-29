@@ -34,11 +34,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK 35
+      - name: Install Android SDK 34
         run: |
+          yes | sdkmanager --licenses || true
           sdkmanager "platform-tools"
-          sdkmanager "platforms;android-35"
-          sdkmanager "build-tools;35.0.0"
+          sdkmanager "platforms;android-34"
+          sdkmanager "build-tools;34.0.0"
 
       - name: Install dependencies
         run: |
@@ -53,25 +54,44 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Configure Android SDK
+      - name: Configure Android SDK 34
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
           file = Path("android/variables.gradle")
+
+          if not file.exists():
+              raise SystemExit("android/variables.gradle not found")
+
           text = file.read_text()
 
-          text = text.replace(
-              "compileSdkVersion = 33",
-              "compileSdkVersion = 35"
+          import re
+
+          text = re.sub(
+              r'compileSdkVersion\s*=\s*\d+',
+              'compileSdkVersion = 34',
+              text
           )
 
-          text = text.replace(
-              "targetSdkVersion = 33",
-              "targetSdkVersion = 35"
+          text = re.sub(
+              r'targetSdkVersion\s*=\s*\d+',
+              'targetSdkVersion = 34',
+              text
+          )
+
+          text = re.sub(
+              r'minSdkVersion\s*=\s*\d+',
+              'minSdkVersion = 22',
+              text
           )
 
           file.write_text(text)
+
+          print("Android SDK configured:")
+          print("compileSdkVersion = 34")
+          print("targetSdkVersion = 34")
+          print("minSdkVersion = 22")
           PY
 
       - name: Add Start.io SDK
@@ -80,6 +100,10 @@ jobs:
           from pathlib import Path
 
           file = Path("android/app/build.gradle")
+
+          if not file.exists():
+              raise SystemExit("android/app/build.gradle not found")
+
           text = file.read_text()
 
           lines = text.splitlines()
@@ -150,10 +174,15 @@ jobs:
                           })
                           .init();
 
+                  // Test ads ON for testing
                   StartAppSDK.setTestAdsEnabled(true);
               }
 
               private void loadInterstitialInternal() {
+
+                  if (getActivity() == null) {
+                      return;
+                  }
 
                   getActivity().runOnUiThread(() -> {
 
@@ -187,6 +216,14 @@ jobs:
 
               @PluginMethod
               public void showInterstitial(PluginCall call) {
+
+                  if (getActivity() == null) {
+                      JSObject result = new JSObject();
+                      result.put("shown", false);
+                      result.put("reason", "Activity unavailable");
+                      call.resolve(result);
+                      return;
+                  }
 
                   getActivity().runOnUiThread(() -> {
 
@@ -284,13 +321,18 @@ jobs:
         run: |
           npx cap sync android
 
-      - name: Build Android Debug APK
+      - name: Clean Android build
         working-directory: android
         run: |
           chmod +x ./gradlew
+          ./gradlew clean --no-daemon
+
+      - name: Build Android Debug APK
+        working-directory: android
+        run: |
           ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Build Android AAB
+      - name: Build Android Release AAB
         working-directory: android
         run: |
           ./gradlew bundleRelease --no-daemon --stacktrace
