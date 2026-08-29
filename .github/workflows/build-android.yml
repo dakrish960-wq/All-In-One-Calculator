@@ -1,3 +1,4 @@
+```yaml
 name: Android CI - Build APK & AAB
 
 on:
@@ -16,6 +17,7 @@ jobs:
       STARTIO_APP_ID: '207279640'
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -33,18 +35,60 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK 37
+        run: |
+          sdkmanager "platforms;android-37"
+          sdkmanager "build-tools;35.0.0"
+
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
           npm install @capacitor/core@^5.0.0 @capacitor/cli@^5.0.0 @capacitor/android@^5.0.0 --legacy-peer-deps
 
-      - name: Build web assets
+      - name: Build web application
         run: npm run build
 
       - name: Add Android platform
         run: |
           npx cap add android
           npx cap sync android
+
+      - name: Configure Android compile SDK
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          file = Path("android/variables.gradle")
+          text = file.read_text()
+
+          text = text.replace(
+              "compileSdkVersion = 33",
+              "compileSdkVersion = 37"
+          )
+
+          text = text.replace(
+              "targetSdkVersion = 33",
+              "targetSdkVersion = 35"
+          )
+
+          file.write_text(text)
+          PY
+
+      - name: Configure Android Gradle Plugin
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          file = Path("android/build.gradle")
+          text = file.read_text()
+
+          text = text.replace(
+              "com.android.tools.build:gradle:8.0.0",
+              "com.android.tools.build:gradle:8.5.2"
+          )
+
+          file.write_text(text)
+          PY
 
       - name: Add Start.io SDK
         run: |
@@ -54,9 +98,8 @@ jobs:
           file = Path("android/app/build.gradle")
           text = file.read_text()
 
-          dependency = "implementation 'com.startapp:inapp-sdk:5.0.2'"
-
           lines = text.splitlines()
+
           lines = [
               line for line in lines
               if "com.startapp:inapp-sdk:" not in line
@@ -66,6 +109,8 @@ jobs:
 
           if "dependencies {" not in text:
               raise SystemExit("Gradle dependencies block was not found.")
+
+          dependency = "implementation 'com.startapp:inapp-sdk:5.3.2'"
 
           text = text.replace(
               "dependencies {",
@@ -121,6 +166,7 @@ jobs:
                           })
                           .init();
 
+                  // TEST MODE
                   StartAppSDK.setTestAdsEnabled(true);
               }
 
@@ -153,6 +199,7 @@ jobs:
 
                   JSObject result = new JSObject();
                   result.put("started", true);
+
                   call.resolve(result);
               }
 
@@ -164,8 +211,10 @@ jobs:
                       if (interstitialAd == null || !adReady) {
 
                           JSObject result = new JSObject();
+
                           result.put("shown", false);
                           result.put("reason", "Ad is not ready");
+
                           call.resolve(result);
                           return;
                       }
@@ -175,7 +224,9 @@ jobs:
                       adReady = false;
 
                       JSObject result = new JSObject();
+
                       result.put("shown", true);
+
                       call.resolve(result);
 
                       loadInterstitialInternal();
@@ -201,6 +252,7 @@ jobs:
           text = file.read_text()
 
           if "import com.calculator.app.StartIoPlugin;" not in text:
+
               text = text.replace(
                   "import com.getcapacitor.BridgeActivity;",
                   "import com.getcapacitor.BridgeActivity;\n"
@@ -222,7 +274,9 @@ jobs:
               )
 
               if marker not in text:
-                  raise SystemExit("MainActivity class declaration was not found.")
+                  raise SystemExit(
+                      "MainActivity class declaration was not found."
+                  )
 
               text = text.replace(marker, replacement, 1)
 
@@ -237,6 +291,7 @@ jobs:
           import { registerPlugin } from '@capacitor/core';
 
           export interface StartIoPlugin {
+
             loadInterstitial(): Promise<{
               started: boolean;
             }>;
@@ -261,8 +316,21 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Upload APK artifact
+      - name: Build Android AAB
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bundleRelease --no-daemon --stacktrace
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-startio
           path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+```
