@@ -1,22 +1,22 @@
-name: Android CI - Build APK
+name: Android CI - Build APK & AAB
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build Android APK & AAB
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: "20"
-      JAVA_VERSION: "17"
-      STARTIO_APP_ID: "207279640"
+      NODE_VERSION: '20'
+      JAVA_VERSION: '17'
+      STARTIO_APP_ID: '207279640'
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -25,18 +25,19 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Setup Java
+      - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
+          distribution: 'zulu'
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK 37
+      - name: Install Android SDK 35
         run: |
-          sdkmanager "platforms;android-37"
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-35"
           sdkmanager "build-tools;35.0.0"
 
       - name: Install dependencies
@@ -47,7 +48,7 @@ jobs:
       - name: Build web application
         run: npm run build
 
-      - name: Create Android project
+      - name: Add Android platform
         run: |
           npx cap add android
           npx cap sync android
@@ -58,31 +59,16 @@ jobs:
           from pathlib import Path
 
           file = Path("android/variables.gradle")
-
-          if file.exists():
-              text = file.read_text()
-              text = text.replace(
-                  "compileSdkVersion = 33",
-                  "compileSdkVersion = 37"
-              )
-              text = text.replace(
-                  "targetSdkVersion = 33",
-                  "targetSdkVersion = 35"
-              )
-              file.write_text(text)
-          PY
-
-      - name: Update Android Gradle Plugin
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          file = Path("android/build.gradle")
           text = file.read_text()
 
           text = text.replace(
-              "com.android.tools.build:gradle:8.0.0",
-              "com.android.tools.build:gradle:8.5.2"
+              "compileSdkVersion = 33",
+              "compileSdkVersion = 35"
+          )
+
+          text = text.replace(
+              "targetSdkVersion = 33",
+              "targetSdkVersion = 35"
           )
 
           file.write_text(text)
@@ -105,21 +91,21 @@ jobs:
 
           text = "\n".join(lines) + "\n"
 
-          dependency = "implementation 'com.startapp:inapp-sdk:5.3.2'"
+          dependency = "    implementation 'com.startapp:inapp-sdk:5.0.2'"
 
           if "dependencies {" not in text:
-              raise SystemExit("Gradle dependencies block was not found.")
+              raise SystemExit("dependencies block not found")
 
           text = text.replace(
               "dependencies {",
-              "dependencies {\n    " + dependency,
+              "dependencies {\n" + dependency,
               1
           )
 
           file.write_text(text)
           PY
 
-      - name: Create Start.io plugin
+      - name: Create Start.io native plugin
         run: |
           PACKAGE_DIR="android/app/src/main/java/com/calculator/app"
 
@@ -168,6 +154,7 @@ jobs:
               }
 
               private void loadInterstitialInternal() {
+
                   getActivity().runOnUiThread(() -> {
 
                       interstitialAd = new StartAppAd(getActivity());
@@ -190,11 +177,11 @@ jobs:
 
               @PluginMethod
               public void loadInterstitial(PluginCall call) {
+
                   loadInterstitialInternal();
 
                   JSObject result = new JSObject();
                   result.put("started", true);
-
                   call.resolve(result);
               }
 
@@ -208,7 +195,6 @@ jobs:
                           JSObject result = new JSObject();
                           result.put("shown", false);
                           result.put("reason", "Ad is not ready");
-
                           call.resolve(result);
                           return;
                       }
@@ -219,7 +205,6 @@ jobs:
 
                       JSObject result = new JSObject();
                       result.put("shown", true);
-
                       call.resolve(result);
 
                       loadInterstitialInternal();
@@ -244,21 +229,16 @@ jobs:
           file = Path(sys.argv[1])
           text = file.read_text()
 
-          import_line = "import com.calculator.app.StartIoPlugin;"
-
-          if import_line not in text:
+          if "import com.calculator.app.StartIoPlugin;" not in text:
               text = text.replace(
                   "import com.getcapacitor.BridgeActivity;",
-                  "import com.getcapacitor.BridgeActivity;\n" + import_line
+                  "import com.getcapacitor.BridgeActivity;\n"
+                  "import com.calculator.app.StartIoPlugin;"
               )
 
           if "registerPlugin(StartIoPlugin.class);" not in text:
-              marker = "public class MainActivity extends BridgeActivity {"
 
-              if marker not in text:
-                  raise SystemExit(
-                      "MainActivity class declaration was not found."
-                  )
+              marker = "public class MainActivity extends BridgeActivity {"
 
               replacement = (
                   marker
@@ -269,6 +249,9 @@ jobs:
                   + "        registerPlugin(StartIoPlugin.class);\n"
                   + "    }\n"
               )
+
+              if marker not in text:
+                  raise SystemExit("MainActivity class declaration was not found.")
 
               text = text.replace(marker, replacement, 1)
 
@@ -301,14 +284,25 @@ jobs:
         run: |
           npx cap sync android
 
-      - name: Build Debug APK
+      - name: Build Android Debug APK
         working-directory: android
         run: |
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Build Android AAB
+        working-directory: android
+        run: |
+          ./gradlew bundleRelease --no-daemon --stacktrace
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: all-in-one-calculator-startio-apk
+          name: app-debug-startio
           path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
