@@ -3,7 +3,8 @@ name: Android CI - Build APK & AAB
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
@@ -17,23 +18,42 @@ jobs:
 
     steps:
 
+      # --------------------------------
+      # 1. Checkout
+      # --------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+
+      # --------------------------------
+      # 2. Node.js
+      # --------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+
+      # --------------------------------
+      # 3. Java
+      # --------------------------------
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: ${{ env.JAVA_VERSION }}
 
+
+      # --------------------------------
+      # 4. Android SDK
+      # --------------------------------
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+
+      # --------------------------------
+      # 5. Install Android SDK 34
+      # --------------------------------
       - name: Install Android SDK 34
         run: |
           yes | sdkmanager --licenses || true
@@ -41,23 +61,40 @@ jobs:
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
 
+
+      # --------------------------------
+      # 6. Install npm dependencies
+      # --------------------------------
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
           npm install @capacitor/core@^5.0.0 @capacitor/cli@^5.0.0 @capacitor/android@^5.0.0 --legacy-peer-deps
 
+
+      # --------------------------------
+      # 7. Build React/Vite
+      # --------------------------------
       - name: Build web application
         run: npm run build
 
+
+      # --------------------------------
+      # 8. Add Capacitor Android
+      # --------------------------------
       - name: Add Android platform
         run: |
           npx cap add android
           npx cap sync android
 
-      - name: Configure Android SDK 34
+
+      # --------------------------------
+      # 9. Configure Android SDK
+      # --------------------------------
+      - name: Configure Android SDK
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           file = Path("android/variables.gradle")
 
@@ -65,8 +102,6 @@ jobs:
               raise SystemExit("android/variables.gradle not found")
 
           text = file.read_text()
-
-          import re
 
           text = re.sub(
               r'compileSdkVersion\s*=\s*\d+',
@@ -88,12 +123,16 @@ jobs:
 
           file.write_text(text)
 
-          print("Android SDK configured:")
+          print("Android SDK configured")
           print("compileSdkVersion = 34")
           print("targetSdkVersion = 34")
           print("minSdkVersion = 22")
           PY
 
+
+      # --------------------------------
+      # 10. Add Start.io SDK
+      # --------------------------------
       - name: Add Start.io SDK
         run: |
           python3 - <<'PY'
@@ -106,6 +145,7 @@ jobs:
 
           text = file.read_text()
 
+          # Remove old Start.io dependency
           lines = text.splitlines()
 
           lines = [
@@ -118,7 +158,7 @@ jobs:
           dependency = "    implementation 'com.startapp:inapp-sdk:5.0.2'"
 
           if "dependencies {" not in text:
-              raise SystemExit("dependencies block not found")
+              raise SystemExit("Gradle dependencies block not found")
 
           text = text.replace(
               "dependencies {",
@@ -127,8 +167,14 @@ jobs:
           )
 
           file.write_text(text)
+
+          print("Start.io SDK added")
           PY
 
+
+      # --------------------------------
+      # 11. Create Start.io Native Plugin
+      # --------------------------------
       - name: Create Start.io native plugin
         run: |
           PACKAGE_DIR="android/app/src/main/java/com/calculator/app"
@@ -174,7 +220,7 @@ jobs:
                           })
                           .init();
 
-                  // Test ads ON for testing
+                  // Test ads enabled
                   StartAppSDK.setTestAdsEnabled(true);
               }
 
@@ -211,6 +257,7 @@ jobs:
 
                   JSObject result = new JSObject();
                   result.put("started", true);
+
                   call.resolve(result);
               }
 
@@ -218,9 +265,11 @@ jobs:
               public void showInterstitial(PluginCall call) {
 
                   if (getActivity() == null) {
+
                       JSObject result = new JSObject();
                       result.put("shown", false);
                       result.put("reason", "Activity unavailable");
+
                       call.resolve(result);
                       return;
                   }
@@ -232,6 +281,7 @@ jobs:
                           JSObject result = new JSObject();
                           result.put("shown", false);
                           result.put("reason", "Ad is not ready");
+
                           call.resolve(result);
                           return;
                       }
@@ -242,20 +292,26 @@ jobs:
 
                       JSObject result = new JSObject();
                       result.put("shown", true);
+
                       call.resolve(result);
 
+                      // Load next ad
                       loadInterstitialInternal();
                   });
               }
           }
           JAVA
 
+
+      # --------------------------------
+      # 12. Register Start.io Plugin
+      # --------------------------------
       - name: Register Start.io plugin
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
 
           if [ -z "$MAIN_ACTIVITY" ]; then
-            echo "MainActivity.java was not found."
+            echo "MainActivity.java not found"
             exit 1
           fi
 
@@ -266,16 +322,24 @@ jobs:
           file = Path(sys.argv[1])
           text = file.read_text()
 
+          # Add import
           if "import com.calculator.app.StartIoPlugin;" not in text:
+
               text = text.replace(
                   "import com.getcapacitor.BridgeActivity;",
                   "import com.getcapacitor.BridgeActivity;\n"
                   "import com.calculator.app.StartIoPlugin;"
               )
 
+          # Register plugin
           if "registerPlugin(StartIoPlugin.class);" not in text:
 
               marker = "public class MainActivity extends BridgeActivity {"
+
+              if marker not in text:
+                  raise SystemExit(
+                      "MainActivity class declaration not found"
+                  )
 
               replacement = (
                   marker
@@ -287,14 +351,21 @@ jobs:
                   + "    }\n"
               )
 
-              if marker not in text:
-                  raise SystemExit("MainActivity class declaration was not found.")
-
-              text = text.replace(marker, replacement, 1)
+              text = text.replace(
+                  marker,
+                  replacement,
+                  1
+              )
 
           file.write_text(text)
+
+          print("Start.io plugin registered")
           PY
 
+
+      # --------------------------------
+      # 13. Create JavaScript Bridge
+      # --------------------------------
       - name: Create Start.io JavaScript bridge
         run: |
           mkdir -p src/lib
@@ -303,6 +374,7 @@ jobs:
           import { registerPlugin } from '@capacitor/core';
 
           export interface StartIoPlugin {
+
             loadInterstitial(): Promise<{
               started: boolean;
             }>;
@@ -311,38 +383,63 @@ jobs:
               shown: boolean;
               reason?: string;
             }>;
+
           }
 
           export const StartIo =
             registerPlugin<StartIoPlugin>('StartIo');
           EOF
 
+
+      # --------------------------------
+      # 14. Sync Capacitor
+      # --------------------------------
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
+
+      # --------------------------------
+      # 15. Clean Android
+      # --------------------------------
       - name: Clean Android build
         working-directory: android
         run: |
           chmod +x ./gradlew
           ./gradlew clean --no-daemon
 
+
+      # --------------------------------
+      # 16. Build Debug APK
+      # --------------------------------
       - name: Build Android Debug APK
         working-directory: android
         run: |
           ./gradlew assembleDebug --no-daemon --stacktrace
 
+
+      # --------------------------------
+      # 17. Build Release AAB
+      # --------------------------------
       - name: Build Android Release AAB
         working-directory: android
         run: |
           ./gradlew bundleRelease --no-daemon --stacktrace
 
+
+      # --------------------------------
+      # 18. Upload APK
+      # --------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-startio
           path: android/app/build/outputs/apk/debug/*.apk
 
+
+      # --------------------------------
+      # 19. Upload AAB
+      # --------------------------------
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
