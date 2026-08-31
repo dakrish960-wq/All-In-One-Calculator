@@ -12,54 +12,61 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: '20'
-      JAVA_VERSION: '17'
-      STARTIO_APP_ID: '207279640'
+      NODE_VERSION: "20"
+      JAVA_VERSION: "17"
+      STARTIO_APP_ID: "207279640"
 
     steps:
 
+      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Setup Java
+      # 3. Java
+      - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
-          distribution: zulu
+          distribution: "zulu"
           java-version: ${{ env.JAVA_VERSION }}
 
+      # 4. Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK 34
+      # 5. Install stable Android SDK 34
+      - name: Install Android SDK
         run: |
-          yes | sdkmanager --licenses || true
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
 
+      # 6. Install npm dependencies
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
           npm install @capacitor/core@^5.0.0 @capacitor/cli@^5.0.0 @capacitor/android@^5.0.0 --legacy-peer-deps
 
+      # 7. Build web application
       - name: Build web application
         run: npm run build
 
+      # 8. Add Android
       - name: Add Android platform
         run: |
           npx cap add android
           npx cap sync android
 
+      # 9. Configure Android SDK
       - name: Configure Android SDK
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           file = Path("android/variables.gradle")
 
@@ -67,6 +74,8 @@ jobs:
               raise SystemExit("android/variables.gradle not found")
 
           text = file.read_text()
+
+          import re
 
           text = re.sub(
               r'compileSdkVersion\s*=\s*\d+',
@@ -87,14 +96,9 @@ jobs:
           )
 
           file.write_text(text)
-
-          print("Android SDK configured to 34")
           PY
 
-      # ---------------------------------------------------------
-      # Start.io SDK
-      # ---------------------------------------------------------
-
+      # 10. Add Start.io SDK
       - name: Add Start.io SDK
         run: |
           python3 - <<'PY'
@@ -107,6 +111,7 @@ jobs:
 
           text = file.read_text()
 
+          # Remove old Start.io dependency
           lines = text.splitlines()
 
           lines = [
@@ -119,7 +124,7 @@ jobs:
           dependency = "    implementation 'com.startapp:inapp-sdk:5.0.2'"
 
           if "dependencies {" not in text:
-              raise SystemExit("dependencies block not found")
+              raise SystemExit("Gradle dependencies block not found")
 
           text = text.replace(
               "dependencies {",
@@ -128,15 +133,10 @@ jobs:
           )
 
           file.write_text(text)
-
-          print("Start.io SDK added")
           PY
 
-      # ---------------------------------------------------------
-      # Create Native Start.io Plugin
-      # ---------------------------------------------------------
-
-      - name: Create Start.io Native Plugin
+      # 11. Create Start.io native plugin
+      - name: Create Start.io native plugin
         run: |
           PACKAGE_DIR="android/app/src/main/java/com/calculator/app"
 
@@ -173,10 +173,10 @@ jobs:
               private static final String APP_ID = "207279640";
 
               private StartAppAd interstitialAd;
-              private boolean interstitialReady = false;
+              private boolean adReady = false;
 
               private Banner banner;
-              private boolean bannerCreated = false;
+              private FrameLayout bannerContainer;
 
               @Override
               public void load() {
@@ -188,201 +188,21 @@ jobs:
                       return;
                   }
 
-                  // Test ads MUST be enabled before testing.
-                  StartAppSDK.setTestAdsEnabled(true);
-
                   StartAppSDK.initParams(activity, APP_ID)
                           .setReturnAdsEnabled(false)
                           .setCallback(new Runnable() {
                               @Override
                               public void run() {
-
-                                  // Load interstitial
                                   loadInterstitialInternal();
-
-                                  // Show native banner
-                                  activity.runOnUiThread(new Runnable() {
-                                      @Override
-                                      public void run() {
-                                          createNativeBanner();
-                                      }
-                                  });
+                                  showBanner();
                               }
                           })
                           .init();
+
+                  // TEST MODE
+                  StartAppSDK.setTestAdsEnabled(true);
               }
 
-              /**
-               * Create the Start.io Banner automatically.
-               *
-               * No App.tsx Banner code is required.
-               */
-              private void createNativeBanner() {
-
-                  Activity activity = getActivity();
-
-                  if (activity == null) {
-                      return;
-                  }
-
-                  activity.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
-
-                          try {
-
-                              if (bannerCreated) {
-                                  return;
-                              }
-
-                              View webView = getBridge().getWebView();
-
-                              if (webView == null) {
-                                  return;
-                              }
-
-                              View parent = (View) webView.getParent();
-
-                              if (!(parent instanceof ViewGroup)) {
-                                  return;
-                              }
-
-                              ViewGroup parentView =
-                                      (ViewGroup) parent;
-
-                              /*
-                               * Create Start.io Banner.
-                               */
-                              banner = new Banner(
-                                      activity,
-                                      new BannerListener() {
-
-                                          @Override
-                                          public void onReceiveAd(
-                                                  @NonNull View view
-                                          ) {
-                                              // Banner loaded successfully.
-                                          }
-
-                                          @Override
-                                          public void onFailedToReceiveAd(
-                                                  @Nullable View view
-                                          ) {
-                                              /*
-                                               * Do NOT call loadAd() here.
-                                               * Start.io automatically retries.
-                                               */
-                                          }
-
-                                          @Override
-                                          public void onImpression(
-                                                  @NonNull View view
-                                          ) {
-                                              // Impression received.
-                                          }
-
-                                          @Override
-                                          public void onClick(
-                                                  @NonNull View view
-                                          ) {
-                                              // Banner clicked.
-                                          }
-                                      }
-                              );
-
-                              /*
-                               * Banner container.
-                               */
-                              FrameLayout bannerContainer =
-                                      new FrameLayout(activity);
-
-                              bannerContainer.setGravity(
-                                      Gravity.CENTER
-                              );
-
-                              /*
-                               * Position:
-                               *
-                               * Bottom of screen
-                               * minus approximately 60dp
-                               *
-                               * This keeps the Banner above
-                               * the React bottom navigation.
-                               */
-                              FrameLayout.LayoutParams containerParams =
-                                      new FrameLayout.LayoutParams(
-                                              ViewGroup.LayoutParams.MATCH_PARENT,
-                                              ViewGroup.LayoutParams.WRAP_CONTENT
-                                      );
-
-                              containerParams.gravity =
-                                      Gravity.BOTTOM |
-                                      Gravity.CENTER_HORIZONTAL;
-
-                              containerParams.bottomMargin =
-                                      dpToPx(activity, 58);
-
-                              /*
-                               * Keep Banner above WebView.
-                               */
-                              bannerContainer.setElevation(1000f);
-
-                              parentView.addView(
-                                      bannerContainer,
-                                      containerParams
-                              );
-
-                              /*
-                               * Add actual Start.io Banner.
-                               */
-                              FrameLayout.LayoutParams bannerParams =
-                                      new FrameLayout.LayoutParams(
-                                              ViewGroup.LayoutParams.WRAP_CONTENT,
-                                              ViewGroup.LayoutParams.WRAP_CONTENT
-                                      );
-
-                              bannerParams.gravity =
-                                      Gravity.CENTER;
-
-                              bannerContainer.addView(
-                                      banner,
-                                      bannerParams
-                              );
-
-                              bannerCreated = true;
-
-                          } catch (Exception e) {
-
-                              /*
-                               * Never crash the calculator
-                               * because of an ad problem.
-                               */
-                              banner = null;
-                              bannerCreated = false;
-                          }
-                      }
-                  });
-              }
-
-              /**
-               * Convert DP to pixels.
-               */
-              private int dpToPx(
-                      Activity activity,
-                      int dp
-              ) {
-
-                  float density =
-                          activity.getResources()
-                                  .getDisplayMetrics()
-                                  .density;
-
-                  return Math.round(dp * density);
-              }
-
-              /**
-               * Load Interstitial.
-               */
               private void loadInterstitialInternal() {
 
                   Activity activity = getActivity();
@@ -391,150 +211,167 @@ jobs:
                       return;
                   }
 
-                  activity.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
+                  activity.runOnUiThread(() -> {
 
-                          interstitialAd =
-                                  new StartAppAd(activity);
+                      interstitialAd = new StartAppAd(activity);
+                      adReady = false;
 
-                          interstitialReady = false;
+                      interstitialAd.loadAd(new AdEventListener() {
 
-                          interstitialAd.loadAd(
-                                  new AdEventListener() {
+                          @Override
+                          public void onReceiveAd(@NonNull Ad ad) {
+                              adReady = true;
+                          }
 
-                                      @Override
-                                      public void onReceiveAd(
-                                              @NonNull Ad ad
-                                      ) {
-                                          interstitialReady = true;
-                                      }
-
-                                      @Override
-                                      public void onFailedToReceiveAd(
-                                              @Nullable Ad ad
-                                      ) {
-                                          interstitialReady = false;
-                                      }
-                                  }
-                          );
-                      }
+                          @Override
+                          public void onFailedToReceiveAd(@Nullable Ad ad) {
+                              adReady = false;
+                          }
+                      });
                   });
               }
 
-              /**
-               * JavaScript bridge:
-               * Load Interstitial.
-               */
-              @PluginMethod
-              public void loadInterstitial(
-                      PluginCall call
-              ) {
-
-                  loadInterstitialInternal();
-
-                  JSObject result =
-                          new JSObject();
-
-                  result.put(
-                          "started",
-                          true
-                  );
-
-                  call.resolve(result);
-              }
-
-              /**
-               * JavaScript bridge:
-               * Show Interstitial.
-               */
-              @PluginMethod
-              public void showInterstitial(
-                      PluginCall call
-              ) {
+              private void showBanner() {
 
                   Activity activity = getActivity();
 
                   if (activity == null) {
-
-                      JSObject result =
-                              new JSObject();
-
-                      result.put(
-                              "shown",
-                              false
-                      );
-
-                      result.put(
-                              "reason",
-                              "Activity unavailable"
-                      );
-
-                      call.resolve(result);
-
                       return;
                   }
 
-                  activity.runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
+                  activity.runOnUiThread(() -> {
 
-                          if (
-                                  interstitialAd == null ||
-                                  !interstitialReady
-                          ) {
+                      if (banner != null) {
+                          return;
+                      }
 
-                              JSObject result =
-                                      new JSObject();
+                      ViewGroup root =
+                              activity.findViewById(android.R.id.content);
 
-                              result.put(
-                                      "shown",
-                                      false
+                      if (root == null) {
+                          return;
+                      }
+
+                      bannerContainer = new FrameLayout(activity);
+
+                      FrameLayout.LayoutParams containerParams =
+                              new FrameLayout.LayoutParams(
+                                      ViewGroup.LayoutParams.MATCH_PARENT,
+                                      ViewGroup.LayoutParams.WRAP_CONTENT
                               );
 
-                              result.put(
-                                      "reason",
-                                      "Ad is not ready"
+                      containerParams.gravity =
+                              Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+
+                      containerParams.bottomMargin = 60;
+
+                      bannerContainer.setLayoutParams(containerParams);
+
+                      banner = new Banner(
+                              activity,
+                              new BannerListener() {
+
+                                  @Override
+                                  public void onReceiveAd(View view) {
+                                  }
+
+                                  @Override
+                                  public void onFailedToReceiveAd(View view) {
+                                  }
+
+                                  @Override
+                                  public void onImpression(View view) {
+                                  }
+
+                                  @Override
+                                  public void onClick(View view) {
+                                  }
+                              }
+                      );
+
+                      FrameLayout.LayoutParams bannerParams =
+                              new FrameLayout.LayoutParams(
+                                      ViewGroup.LayoutParams.WRAP_CONTENT,
+                                      ViewGroup.LayoutParams.WRAP_CONTENT
                               );
 
-                              call.resolve(result);
+                      bannerParams.gravity =
+                              Gravity.CENTER_HORIZONTAL;
 
-                              return;
-                          }
+                      bannerContainer.addView(
+                              banner,
+                              bannerParams
+                      );
 
-                          interstitialAd.showAd();
+                      root.addView(
+                              bannerContainer,
+                              containerParams
+                      );
+                  });
+              }
 
-                          interstitialReady = false;
+              @PluginMethod
+              public void loadInterstitial(PluginCall call) {
 
-                          JSObject result =
-                                  new JSObject();
+                  loadInterstitialInternal();
 
+                  JSObject result = new JSObject();
+
+                  result.put("started", true);
+
+                  call.resolve(result);
+              }
+
+              @PluginMethod
+              public void showInterstitial(PluginCall call) {
+
+                  Activity activity = getActivity();
+
+                  if (activity == null) {
+                      call.reject("Activity is not available");
+                      return;
+                  }
+
+                  activity.runOnUiThread(() -> {
+
+                      if (interstitialAd == null || !adReady) {
+
+                          JSObject result = new JSObject();
+
+                          result.put("shown", false);
                           result.put(
-                                  "shown",
-                                  true
+                                  "reason",
+                                  "Ad is not ready"
                           );
 
                           call.resolve(result);
 
-                          loadInterstitialInternal();
+                          return;
                       }
+
+                      interstitialAd.showAd();
+
+                      adReady = false;
+
+                      JSObject result = new JSObject();
+
+                      result.put("shown", true);
+
+                      call.resolve(result);
+
+                      loadInterstitialInternal();
                   });
               }
           }
           JAVA
 
-          echo "StartIoPlugin.java created successfully"
-
-      # ---------------------------------------------------------
-      # Register Native Plugin
-      # ---------------------------------------------------------
-
-      - name: Register Start.io Plugin
+      # 12. Register plugin
+      - name: Register Start.io plugin
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
 
           if [ -z "$MAIN_ACTIVITY" ]; then
-            echo "MainActivity.java not found"
+            echo "MainActivity.java was not found."
             exit 1
           fi
 
@@ -545,17 +382,23 @@ jobs:
           file = Path(sys.argv[1])
           text = file.read_text()
 
-          if "import com.calculator.app.StartIoPlugin;" not in text:
+          import_line = "import com.calculator.app.StartIoPlugin;"
 
+          if import_line not in text:
               text = text.replace(
                   "import com.getcapacitor.BridgeActivity;",
                   "import com.getcapacitor.BridgeActivity;\n"
-                  "import com.calculator.app.StartIoPlugin;"
+                  + import_line
               )
 
           if "registerPlugin(StartIoPlugin.class);" not in text:
 
               marker = "public class MainActivity extends BridgeActivity {"
+
+              if marker not in text:
+                  raise SystemExit(
+                      "MainActivity class declaration not found"
+                  )
 
               replacement = (
                   marker
@@ -567,11 +410,6 @@ jobs:
                   + "    }\n"
               )
 
-              if marker not in text:
-                  raise SystemExit(
-                      "MainActivity declaration not found"
-                  )
-
               text = text.replace(
                   marker,
                   replacement,
@@ -579,15 +417,10 @@ jobs:
               )
 
           file.write_text(text)
-
-          print("Start.io plugin registered")
           PY
 
-      # ---------------------------------------------------------
-      # JavaScript Bridge
-      # ---------------------------------------------------------
-
-      - name: Create Start.io JavaScript Bridge
+      # 13. JavaScript bridge
+      - name: Create Start.io JavaScript bridge
         run: |
           mkdir -p src/lib
 
@@ -611,58 +444,34 @@ jobs:
             registerPlugin<StartIoPlugin>('StartIo');
           EOF
 
-      # ---------------------------------------------------------
-      # Sync Capacitor
-      # ---------------------------------------------------------
-
+      # 14. Sync Capacitor
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
-      # ---------------------------------------------------------
-      # Clean Android
-      # ---------------------------------------------------------
-
-      - name: Clean Android
+      # 15. Build Debug APK
+      - name: Build Android Debug APK
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew clean --no-daemon
+          ./gradlew clean assembleDebug --no-daemon --stacktrace
 
-      # ---------------------------------------------------------
-      # Build APK
-      # ---------------------------------------------------------
-
-      - name: Build Debug APK
-        working-directory: android
-        run: |
-          ./gradlew assembleDebug --no-daemon --stacktrace
-
-      # ---------------------------------------------------------
-      # Build AAB
-      # ---------------------------------------------------------
-
-      - name: Build Release AAB
+      # 16. Build Release AAB
+      - name: Build Android AAB
         working-directory: android
         run: |
           ./gradlew bundleRelease --no-daemon --stacktrace
 
-      # ---------------------------------------------------------
-      # Upload APK
-      # ---------------------------------------------------------
-
+      # 17. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: calculator-startio-apk
+          name: calculator-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
 
-      # ---------------------------------------------------------
-      # Upload AAB
-      # ---------------------------------------------------------
-
+      # 18. Upload AAB
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: calculator-startio-aab
+          name: calculator-release-aab
           path: android/app/build/outputs/bundle/release/*.aab
