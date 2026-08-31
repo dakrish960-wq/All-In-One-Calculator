@@ -12,59 +12,50 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_VERSION: "20"
-      JAVA_VERSION: "17"
-      STARTIO_APP_ID: "207279640"
+      NODE_VERSION: '20'
+      JAVA_VERSION: '17'
+      STARTIO_APP_ID: '207279640'
 
     steps:
 
-      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # 3. Java
-      - name: Setup Java JDK
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: "zulu"
+          distribution: zulu
           java-version: ${{ env.JAVA_VERSION }}
 
-      # 4. Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 5. Install Android SDK 34
       - name: Install Android SDK 34
         run: |
+          yes | sdkmanager --licenses || true
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
 
-      # 6. Install npm dependencies
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
           npm install @capacitor/core@^5.0.0 @capacitor/cli@^5.0.0 @capacitor/android@^5.0.0 --legacy-peer-deps
 
-      # 7. Build React/Vite application
       - name: Build web application
-        run: |
-          npm run build
+        run: npm run build
 
-      # 8. Create Capacitor Android project
       - name: Add Android platform
         run: |
           npx cap add android
           npx cap sync android
 
-      # 9. Configure Android SDK 34
-      - name: Configure Android SDK 34
+      - name: Configure Android SDK
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -73,7 +64,7 @@ jobs:
           file = Path("android/variables.gradle")
 
           if not file.exists():
-              raise SystemExit("android/variables.gradle was not found.")
+              raise SystemExit("android/variables.gradle not found")
 
           text = file.read_text()
 
@@ -100,38 +91,6 @@ jobs:
           print("Android SDK configured to 34")
           PY
 
-      # 10. Force Android 34 in app build.gradle if necessary
-      - name: Configure app compile SDK
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          file = Path("android/app/build.gradle")
-
-          if not file.exists():
-              raise SystemExit("android/app/build.gradle was not found.")
-
-          text = file.read_text()
-
-          text = re.sub(
-              r'compileSdk\s+\d+',
-              'compileSdk 34',
-              text
-          )
-
-          text = re.sub(
-              r'targetSdk\s+\d+',
-              'targetSdk 34',
-              text
-          )
-
-          file.write_text(text)
-
-          print("app/build.gradle configured.")
-          PY
-
-      # 11. Add Start.io SDK
       - name: Add Start.io SDK
         run: |
           python3 - <<'PY'
@@ -139,9 +98,11 @@ jobs:
 
           file = Path("android/app/build.gradle")
 
+          if not file.exists():
+              raise SystemExit("android/app/build.gradle not found")
+
           text = file.read_text()
 
-          # Remove previous Start.io dependency if present
           lines = text.splitlines()
 
           lines = [
@@ -154,7 +115,7 @@ jobs:
           dependency = "    implementation 'com.startapp:inapp-sdk:5.0.2'"
 
           if "dependencies {" not in text:
-              raise SystemExit("Gradle dependencies block was not found.")
+              raise SystemExit("dependencies block not found")
 
           text = text.replace(
               "dependencies {",
@@ -164,11 +125,10 @@ jobs:
 
           file.write_text(text)
 
-          print("Start.io SDK added.")
+          print("Start.io SDK added")
           PY
 
-      # 12. Create Start.io native plugin
-      - name: Create Start.io native plugin
+      - name: Create Start.io Native Plugin
         run: |
           PACKAGE_DIR="android/app/src/main/java/com/calculator/app"
 
@@ -176,6 +136,11 @@ jobs:
 
           cat > "$PACKAGE_DIR/StartIoPlugin.java" <<'JAVA'
           package com.calculator.app;
+
+          import android.view.Gravity;
+          import android.view.View;
+          import android.view.ViewGroup;
+          import android.widget.FrameLayout;
 
           import androidx.annotation.NonNull;
           import androidx.annotation.Nullable;
@@ -190,6 +155,7 @@ jobs:
           import com.startapp.sdk.adsbase.StartAppAd;
           import com.startapp.sdk.adsbase.StartAppSDK;
           import com.startapp.sdk.adsbase.adlisteners.AdEventListener;
+          import com.startapp.sdk.ads.banner.Banner;
 
           @CapacitorPlugin(name = "StartIo")
           public class StartIoPlugin extends Plugin {
@@ -198,6 +164,9 @@ jobs:
 
               private StartAppAd interstitialAd;
               private boolean adReady = false;
+
+              private Banner banner;
+              private boolean bannerAdded = false;
 
               @Override
               public void load() {
@@ -208,12 +177,15 @@ jobs:
                           .setCallback(new Runnable() {
                               @Override
                               public void run() {
+
                                   loadInterstitialInternal();
+
+                                  showBannerInternal();
                               }
                           })
                           .init();
 
-                  // TEST MODE ONLY
+                  // TEST ADS
                   StartAppSDK.setTestAdsEnabled(true);
               }
 
@@ -225,52 +197,144 @@ jobs:
 
                   getActivity().runOnUiThread(() -> {
 
-                      interstitialAd = new StartAppAd(getActivity());
+                      interstitialAd =
+                              new StartAppAd(getActivity());
+
                       adReady = false;
 
-                      interstitialAd.loadAd(new AdEventListener() {
+                      interstitialAd.loadAd(
+                              new AdEventListener() {
 
-                          @Override
-                          public void onReceiveAd(@NonNull Ad ad) {
-                              adReady = true;
-                          }
+                                  @Override
+                                  public void onReceiveAd(
+                                          @NonNull Ad ad) {
 
-                          @Override
-                          public void onFailedToReceiveAd(@Nullable Ad ad) {
-                              adReady = false;
-                          }
-                      });
+                                      adReady = true;
+                                  }
+
+                                  @Override
+                                  public void onFailedToReceiveAd(
+                                          @Nullable Ad ad) {
+
+                                      adReady = false;
+                                  }
+                              }
+                      );
                   });
               }
 
-              @PluginMethod
-              public void loadInterstitial(PluginCall call) {
-
-                  loadInterstitialInternal();
-
-                  JSObject result = new JSObject();
-                  result.put("started", true);
-
-                  call.resolve(result);
-              }
-
-              @PluginMethod
-              public void showInterstitial(PluginCall call) {
+              private void showBannerInternal() {
 
                   if (getActivity() == null) {
-                      call.reject("Activity is not available.");
                       return;
                   }
 
                   getActivity().runOnUiThread(() -> {
 
-                      if (interstitialAd == null || !adReady) {
+                      try {
 
-                          JSObject result = new JSObject();
-                          result.put("shown", false);
-                          result.put("reason", "Ad is not ready");
+                          if (bannerAdded) {
+                              return;
+                          }
+
+                          View webView =
+                                  getBridge().getWebView();
+
+                          View parent =
+                                  (View) webView.getParent();
+
+                          if (!(parent instanceof ViewGroup)) {
+                              return;
+                          }
+
+                          ViewGroup parentView =
+                                  (ViewGroup) parent;
+
+                          banner =
+                                  new Banner(getActivity());
+
+                          FrameLayout.LayoutParams params =
+                                  new FrameLayout.LayoutParams(
+                                          ViewGroup.LayoutParams.MATCH_PARENT,
+                                          ViewGroup.LayoutParams.WRAP_CONTENT
+                                  );
+
+                          params.gravity = Gravity.BOTTOM;
+
+                          parentView.addView(
+                                  banner,
+                                  params
+                          );
+
+                          bannerAdded = true;
+
+                      } catch (Exception ignored) {
+                      }
+                  });
+              }
+
+              @PluginMethod
+              public void loadInterstitial(
+                      PluginCall call) {
+
+                  loadInterstitialInternal();
+
+                  JSObject result = new JSObject();
+
+                  result.put(
+                          "started",
+                          true
+                  );
+
+                  call.resolve(result);
+              }
+
+              @PluginMethod
+              public void showInterstitial(
+                      PluginCall call) {
+
+                  if (getActivity() == null) {
+
+                      JSObject result =
+                              new JSObject();
+
+                      result.put(
+                              "shown",
+                              false
+                      );
+
+                      result.put(
+                              "reason",
+                              "Activity unavailable"
+                      );
+
+                      call.resolve(result);
+
+                      return;
+                  }
+
+                  getActivity().runOnUiThread(() -> {
+
+                      if (
+                              interstitialAd == null ||
+                              !adReady
+                      ) {
+
+                          JSObject result =
+                                  new JSObject();
+
+                          result.put(
+                                  "shown",
+                                  false
+                          );
+
+                          result.put(
+                                  "reason",
+                                  "Ad is not ready"
+                          );
 
                           call.resolve(result);
+
                           return;
                       }
 
@@ -278,27 +342,28 @@ jobs:
 
                       adReady = false;
 
-                      JSObject result = new JSObject();
-                      result.put("shown", true);
+                      JSObject result =
+                              new JSObject();
+
+                      result.put(
+                              "shown",
+                              true
+                      );
 
                       call.resolve(result);
 
-                      // Preload next ad
                       loadInterstitialInternal();
                   });
               }
           }
           JAVA
 
-          echo "Start.io native plugin created."
-
-      # 13. Register Start.io plugin
-      - name: Register Start.io plugin
+      - name: Register Start.io Plugin
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
 
           if [ -z "$MAIN_ACTIVITY" ]; then
-            echo "MainActivity.java was not found."
+            echo "MainActivity.java not found"
             exit 1
           fi
 
@@ -309,27 +374,16 @@ jobs:
           file = Path(sys.argv[1])
           text = file.read_text()
 
-          import_line = "import com.calculator.app.StartIoPlugin;"
-
-          if import_line not in text:
-              bridge_import = "import com.getcapacitor.BridgeActivity;"
-
-              if bridge_import in text:
-                  text = text.replace(
-                      bridge_import,
-                      bridge_import + "\n" + import_line
-                  )
-              else:
-                  text = import_line + "\n" + text
+          if "import com.calculator.app.StartIoPlugin;" not in text:
+              text = text.replace(
+                  "import com.getcapacitor.BridgeActivity;",
+                  "import com.getcapacitor.BridgeActivity;\n"
+                  "import com.calculator.app.StartIoPlugin;"
+              )
 
           if "registerPlugin(StartIoPlugin.class);" not in text:
 
               marker = "public class MainActivity extends BridgeActivity {"
-
-              if marker not in text:
-                  raise SystemExit(
-                      "MainActivity class declaration was not found."
-                  )
 
               replacement = (
                   marker
@@ -341,6 +395,11 @@ jobs:
                   + "    }\n"
               )
 
+              if marker not in text:
+                  raise SystemExit(
+                      "MainActivity declaration not found"
+                  )
+
               text = text.replace(
                   marker,
                   replacement,
@@ -348,12 +407,9 @@ jobs:
               )
 
           file.write_text(text)
-
-          print("Start.io plugin registered.")
           PY
 
-      # 14. Create JavaScript bridge
-      - name: Create Start.io JavaScript bridge
+      - name: Create Start.io JavaScript Bridge
         run: |
           mkdir -p src/lib
 
@@ -361,6 +417,7 @@ jobs:
           import { registerPlugin } from '@capacitor/core';
 
           export interface StartIoPlugin {
+
             loadInterstitial(): Promise<{
               started: boolean;
             }>;
@@ -375,45 +432,34 @@ jobs:
             registerPlugin<StartIoPlugin>('StartIo');
           EOF
 
-          echo "JavaScript bridge created."
-
-      # 15. Sync Capacitor
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
-      # 16. Clean Android build
-      - name: Clean Android build
+      - name: Clean Android
         working-directory: android
         run: |
           chmod +x ./gradlew
           ./gradlew clean --no-daemon
 
-      # 17. Build Debug APK
-      - name: Build Android Debug APK
+      - name: Build Debug APK
         working-directory: android
         run: |
-          chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
-      # 18. Build Release AAB
-      - name: Build Android Release AAB
+      - name: Build Release AAB
         working-directory: android
         run: |
           ./gradlew bundleRelease --no-daemon --stacktrace
 
-      # 19. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-startio
+          name: calculator-startio-apk
           path: android/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
 
-      # 20. Upload AAB
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-aab
+          name: calculator-startio-aab
           path: android/app/build/outputs/bundle/release/*.aab
-          if-no-files-found: error
