@@ -1,13 +1,12 @@
- import React, { useEffect } from 'react';
-import { StartIoConfig, Language } from '../types';
+import React, { useEffect } from 'react';
+import { StartIoConfig } from '../types';
 
 interface AdBannerProps {
   config: StartIoConfig;
-  lang: Language;
 }
 
 export const AdBanner: React.FC<AdBannerProps> = ({ config }) => {
-  const appId = config.appId || '206473031';
+  const appId = config.appId || '208473910';
 
   useEffect(() => {
     if (!config.enabled || !config.showBanner) return;
@@ -21,6 +20,12 @@ export const AdBanner: React.FC<AdBannerProps> = ({ config }) => {
       script.id = scriptId;
       script.src = 'https://cdn.startappservice.com/js/startapp-publisher-3.0.0.min.js';
       script.async = true;
+      script.onload = () => {
+        // Reinitialize any ads on the page
+        if (window.StartAppAds) {
+          window.StartAppAds.init();
+        }
+      };
       document.body.appendChild(script);
     }
   }, [config.enabled, config.showBanner]);
@@ -30,7 +35,7 @@ export const AdBanner: React.FC<AdBannerProps> = ({ config }) => {
   return (
     <div className="w-full max-w-lg mx-auto my-2 px-2 flex justify-center items-center">
       <div className="w-full min-h-[60px] bg-slate-900/80 border border-slate-800 rounded-xl p-1 flex items-center justify-center overflow-hidden">
-        {/* Start.io Official Live Web Banner Unit */}
+        {/* Start.io Official Live Web Banner Unit - ID: 208473910 */}
         <div 
           className="startapp-ad" 
           data-app-id={appId}
