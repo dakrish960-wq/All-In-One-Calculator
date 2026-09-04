@@ -8,6 +8,7 @@ import { ViralCalculator } from './components/ViralCalculator'
 import { WeightCalculator } from './components/WeightCalculator'
 import { CurrencyCalculator } from './components/CurrencyCalculator'
 import { LoveCalculator } from './components/LoveCalculator'
+import { AdBanner } from './components/AdBanner'
 import { SettingsModal } from './components/SettingsModal'
 import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import { StartIo } from './lib/startIo'
@@ -20,17 +21,27 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const [startIoConfig, setStartIoConfig] = useState<StartIoConfig>({
-    appId: '207279640',
+    appId: '206473031', // Live Ad ID
     enabled: true,
     showBanner: true,
     showInterstitialOnSwitch: true,
-    testMode: true,
+    testMode: false,
   })
 
-  // Start.io Interstitial preload
+  // Initialize Start.io on mount
   useEffect(() => {
+    console.log('🚀 App initialized - Start.io Live Ads enabled (ID: 206473031)');
+    
+    // Force SDK reload
     if (startIoConfig.enabled) {
-      StartIo.loadInterstitial().catch(() => {})
+      try {
+        if (window.StartAppAds) {
+          window.StartAppAds.init();
+          console.log('✅ Start.io SDK initialized');
+        }
+      } catch (error) {
+        console.log('ℹ️ Start.io ready for ads');
+      }
     }
   }, [startIoConfig.enabled])
 
@@ -55,6 +66,11 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-3 pb-2 overflow-y-auto space-y-4">
 
+        {/* Ad Banner Top */}
+        {startIoConfig.enabled && startIoConfig.showBanner && (
+          <AdBanner config={startIoConfig} />
+        )}
+
         <div className="w-full">
           {activeTab === 'standard' && <StandardCalculator lang={lang} />}
           {activeTab === 'age' && <AgeCalculator lang={lang} />}
@@ -65,10 +81,15 @@ function App() {
           {activeTab === 'love' && <LoveCalculator lang={lang} />}
         </div>
 
+        {/* Ad Banner Bottom */}
+        {startIoConfig.enabled && startIoConfig.showBanner && (
+          <AdBanner config={startIoConfig} />
+        )}
+
         {/* Privacy Policy & Settings */}
         <div className="pt-2 pb-2 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-3 text-center">
           <a
-            href="https://docs.google.com/document/d/1WE176kjz7U1MgTzbevyo5TntbPuAQVeXIEj0CTkVqCA/edit?usp=drivesdk"
+            href="https://raw.githubusercontent.com/dakrish960-wq/All-In-One-Calculator/main/PRIVACY_POLICY.md"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-emerald-600 dark:hover:text-emerald-400 font-medium underline"
@@ -85,14 +106,6 @@ function App() {
             Settings
           </button>
         </div>
-
-        {/* Start.io Banner Ad Space */}
-        {startIoConfig.enabled && startIoConfig.showBanner && (
-          <div
-            id="startio-banner-container"
-            className="w-full min-h-[60px] flex items-center justify-center overflow-hidden"
-          />
-        )}
 
       </main>
 
