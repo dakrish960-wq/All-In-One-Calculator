@@ -30,17 +30,17 @@ function App() {
 
   // Initialize Start.io on mount
   useEffect(() => {
-    console.log('🚀 App initialized - Start.io Live Ads enabled (ID: 206473031)');
+    console.log('🚀 App initialized - Start.io Live Ads enabled (ID: 206473031)')
     
     // Force SDK reload
     if (startIoConfig.enabled) {
       try {
         if (window.StartAppAds) {
-          window.StartAppAds.init();
-          console.log('✅ Start.io SDK initialized');
+          window.StartAppAds.init()
+          console.log('✅ Start.io SDK initialized')
         }
       } catch (error) {
-        console.log('ℹ️ Start.io ready for ads');
+        console.log('ℹ️ Start.io ready for ads')
       }
     }
   }, [startIoConfig.enabled])
