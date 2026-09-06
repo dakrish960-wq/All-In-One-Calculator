@@ -46,6 +46,14 @@ npm run build
 
 ## 📱 Step 2: Capacitor Setup (Android এর জন্য)
 
+`android/` ফোল্ডার ইতিমধ্যে repository-তে আছে, তাই সাধারণত এই ধাপ আবার করার প্রয়োজন নেই। শুধু web assets পরিবর্তন করলে sync করুন:
+
+```bash
+npx cap sync android
+```
+
+(যদি কখনো `android/` ফোল্ডার মুছে যায় বা নতুন করে তৈরি করতে চান, নিচের ধাপ অনুসরণ করুন।)
+
 ### 2.1 Capacitor Initialize করুন (প্রথমবার)
 ```bash
 npm run cap:init
@@ -99,6 +107,20 @@ Keystore Password: calculator123
 Key Alias: release
 Key Password: calculator123
 ```
+
+### 3.3 Release Build-কে Sign করুন
+`android/app/build.gradle`-এ signing config যোগ করা আছে, যা `android/keystore.properties` ফাইল (git-ignored) থেকে পড়ে। ফাইলটি তৈরি করুন:
+
+```bash
+cat > android/keystore.properties <<'EOF'
+storeFile=app/release-key.jks
+storePassword=calculator123
+keyAlias=release
+keyPassword=calculator123
+EOF
+```
+
+এই ফাইল না থাকলেও build fail হবে না—তখন APK unsigned থাকবে। CI/CD-তে চাইলে এর বদলে environment variable ব্যবহার করতে পারেন: `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`।
 
 ---
 

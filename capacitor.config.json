@@ -2,7 +2,6 @@
   "appId": "com.calculator.allinone",
   "appName": "All In One Calculator",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https"
   },
