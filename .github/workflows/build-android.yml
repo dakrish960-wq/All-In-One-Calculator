@@ -110,7 +110,6 @@ jobs:
 
           text = file.read_text()
 
-          # Remove old Start.io dependencies
           lines = text.splitlines()
 
           lines = [
@@ -153,7 +152,6 @@ jobs:
           import androidx.annotation.NonNull;
           import androidx.annotation.Nullable;
 
-          import com.capacitorjs.plugins.R;
           import com.getcapacitor.JSObject;
           import com.getcapacitor.Plugin;
           import com.getcapacitor.PluginCall;
