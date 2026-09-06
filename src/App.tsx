@@ -9,6 +9,7 @@ import { WeightCalculator } from './components/WeightCalculator'
 import { CurrencyCalculator } from './components/CurrencyCalculator'
 import { LoveCalculator } from './components/LoveCalculator'
 import { AdBanner } from './components/AdBanner'
+import { ClockCalendar } from './components/ClockCalendar'
 import { SettingsModal } from './components/SettingsModal'
 import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import { StartIo } from './lib/startIo'
@@ -66,10 +67,8 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-3 pb-2 overflow-y-auto space-y-4">
 
-        {/* Ad Banner Top */}
-        {startIoConfig.enabled && startIoConfig.showBanner && (
-          <AdBanner config={startIoConfig} />
-        )}
+        {/* Compact clock & calendar widget - small and unobtrusive, calculator stays the focus */}
+        <ClockCalendar />
 
         <div className="w-full">
           {activeTab === 'standard' && <StandardCalculator lang={lang} />}
