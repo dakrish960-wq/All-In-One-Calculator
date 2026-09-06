@@ -158,7 +158,7 @@ export const translations = {
 
     // Ads & Policy
     startIoAd: 'Start.io Ad Unit (Simulated)',
-    startIoStatus: 'Start.io SDK Ready (App ID: 208473910)',
+    startIoStatus: 'Start.io SDK Ready',
     playStoreReady: 'Play Store Ready & Compliant',
     privacyPolicy: 'Privacy Policy',
     termsOfService: 'Terms of Service',
@@ -313,7 +313,7 @@ export const translations = {
     communicationScore: 'যোগাযোগ ও বোঝাপড়া',
     passionScore: 'ভালোবাসা ও কেমিস্ট্রি',
     trustScore: 'বিশ্বাস ও বন্ধন',
-    funScore: 'আনন্দ ও অ্যাডভেঞ্চার',
+    funScore: 'আন���্দ ও অ্যাডভেঞ্চার',
     funQuote: 'আজকের ভালোবাসার বিশেষ কোট',
 
     // Standard Calculator
@@ -323,7 +323,7 @@ export const translations = {
 
     // Ads & Policy
     startIoAd: 'Start.io অ্যাড ইউনিট (Simulated)',
-    startIoStatus: 'Start.io SDK প্রস্তুত (App ID: 208473910)',
+    startIoStatus: 'Start.io SDK প্রস্তুত',
     playStoreReady: 'প্লে স্টোরের জন্য ১০০% প্রস্তুত',
     privacyPolicy: 'প্রাইভেসি পলিসি',
     termsOfService: 'শর্তাবলী',
