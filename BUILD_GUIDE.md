@@ -4,7 +4,7 @@
 - **App Name:** All In One Calculator
 - **Package Name:** com.calculator.allinone
 - **Version:** 1.0.0
-- **Start.io Ad ID:** 208473910
+- **Start.io Ad ID:** 206473031
 - **Privacy Policy:** https://raw.githubusercontent.com/dakrish960-wq/All-In-One-Calculator/main/PRIVACY_POLICY.md
 
 ---
@@ -111,7 +111,7 @@ Key Password: calculator123
 android/
 ```
 
-**বা কমান্ড দিয়ে:**
+**বা কমান্ড দিয়ে: **
 ```bash
 cd android
 ./gradlew bundleRelease
@@ -257,7 +257,7 @@ chmod +x android/gradlew
 - [ ] Description & short description সঠিক
 - [ ] App Icon (512x512) যোগ করেছেন
 - [ ] Category সিলেক্ট করেছেন (Productivity/Tools)
-- [ ] Start.io Ad ID verified: 208473910
+- [ ] Start.io Ad ID verified: 206473031
 
 ---
 
