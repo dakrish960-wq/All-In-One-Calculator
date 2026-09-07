@@ -12,6 +12,7 @@ import { AdBanner } from './components/AdBanner'
 import { SettingsModal } from './components/SettingsModal'
 import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import { StartIo } from './lib/startIo'
+import { APP_DOWNLOAD_URL, APP_SHARE_TEXT } from './config/share'
 import './App.css'
 
 function App() {
@@ -27,6 +28,30 @@ function App() {
     showInterstitialOnSwitch: true,
     testMode: false,
   })
+
+  const handleShareApp = async () => {
+    const shareData = {
+      title: 'All In One Calculator',
+      text: APP_SHARE_TEXT,
+      url: APP_DOWNLOAD_URL,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (error) {
+        console.log('Share cancelled or failed', error)
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(APP_SHARE_TEXT)
+        alert('Share text copied to clipboard!')
+      } catch (error) {
+        console.log('Clipboard copy failed', error)
+        alert('Could not share or copy the link.')
+      }
+    }
+  }
 
   // Initialize Start.io on mount
   useEffect(() => {
@@ -53,8 +78,6 @@ function App() {
           : 'bg-slate-100 text-slate-900 h-screen flex flex-col font-sans overflow-hidden'
       }
     >
-
-      {/* Header */}
       <Header
         lang={lang}
         setLang={setLang}
@@ -63,10 +86,7 @@ function App() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* Main Content */}
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-3 pb-2 overflow-y-auto space-y-4">
-
-        {/* Ad Banner Top */}
         {startIoConfig.enabled && startIoConfig.showBanner && (
           <AdBanner config={startIoConfig} />
         )}
@@ -81,12 +101,10 @@ function App() {
           {activeTab === 'love' && <LoveCalculator lang={lang} />}
         </div>
 
-        {/* Ad Banner Bottom */}
         {startIoConfig.enabled && startIoConfig.showBanner && (
           <AdBanner config={startIoConfig} />
         )}
 
-        {/* Privacy Policy & Settings */}
         <div className="pt-2 pb-2 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-3 text-center">
           <a
             href="https://raw.githubusercontent.com/dakrish960-wq/All-In-One-Calculator/main/PRIVACY_POLICY.md"
@@ -106,10 +124,8 @@ function App() {
             Settings
           </button>
         </div>
-
       </main>
 
-      {/* Bottom Navigation */}
       <div className="w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-1 shadow-lg z-50">
         <div className="max-w-lg mx-auto px-2">
           <Navigation
@@ -129,6 +145,7 @@ function App() {
         setTheme={setTheme}
         startIoConfig={startIoConfig}
         setStartIoConfig={setStartIoConfig}
+        onShareApp={handleShareApp}
       />
     </div>
   )
