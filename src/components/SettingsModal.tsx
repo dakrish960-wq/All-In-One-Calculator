@@ -1,127 +1,201 @@
-   import React, { useState } from 'react';
-import { X, ShieldCheck, Share2, ExternalLink, Check } from 'lucide-react';
-import { Language, ThemeMode, StartIoConfig } from '../types';
+import React from 'react'
+import { Language, ThemeMode, StartIoConfig } from '../types'
+import { translations } from '../data/translations'
+import { APP_DOWNLOAD_URL, APP_SHARE_TEXT } from '../config/share'
 
 interface SettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  lang: Language;
-  setLang: (l: Language) => void;
-  theme: ThemeMode;
-  setTheme: (t: ThemeMode) => void;
-  startIoConfig: StartIoConfig;
-  setStartIoConfig: React.Dispatch<React.SetStateAction<StartIoConfig>>;
+  isOpen: boolean
+  onClose: () => void
+  lang: Language
+  setLang: (lang: Language) => void
+  theme: ThemeMode
+  setTheme: (theme: ThemeMode) => void
+  startIoConfig: StartIoConfig
+  setStartIoConfig: React.Dispatch<React.SetStateAction<StartIoConfig>>
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
+  lang,
+  setLang,
+  theme,
+  setTheme,
+  startIoConfig,
+  setStartIoConfig,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const t = translations[lang]
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
-  const handleShare = async () => {
+  const handleShareApp = async () => {
     const shareData = {
       title: 'All In One Calculator',
-      text: 'Check out this awesome All In One Calculator App!',
-    };
+      text: APP_SHARE_TEXT,
+      url: APP_DOWNLOAD_URL,
+    }
 
     if (navigator.share) {
       try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.log('Error sharing:', err);
+        await navigator.share(shareData)
+      } catch (error) {
+        console.log('Share cancelled or failed', error)
       }
     } else {
-      navigator.clipboard.writeText(`${shareData.title} - ${shareData.text}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        await navigator.clipboard.writeText(APP_SHARE_TEXT)
+        alert('Share text copied to clipboard!')
+      } catch (error) {
+        console.log('Clipboard copy failed', error)
+        alert('Could not share or copy the link.')
+      }
     }
-  };
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col">
-        
-        {/* Header */}
-        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 shrink-0">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-500" />
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">
-              Settings & Options
-            </h3>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-5 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            {t.settings}
+          </h2>
+          <button
+            onClick={onClose}
+            className="px-3 py-1 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">
+              {t.language}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setLang('en')}
+                className={`py-2 rounded-xl font-medium ${
+                  lang === 'en'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => setLang('bn')}
+                className={`py-2 rounded-xl font-medium ${
+                  lang === 'bn'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                বাংলা
+              </button>
+            </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">
+              {t.theme}
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setTheme('light')}
+                className={`py-2 rounded-xl font-medium ${
+                  theme === 'light'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                Light
+              </button>
+              <button
+                onClick={() => setTheme('dark')}
+                className={`py-2 rounded-xl font-medium ${
+                  theme === 'dark'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                Dark
+              </button>
+              <button
+                onClick={() => setTheme('system')}
+                className={`py-2 rounded-xl font-medium ${
+                  theme === 'system'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                System
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+            <h3 className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">
+              Ads
+            </h3>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                Enable Ads
+              </span>
+              <button
+                onClick={() =>
+                  setStartIoConfig((prev) => ({
+                    ...prev,
+                    enabled: !prev.enabled,
+                  }))
+                }
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  startIoConfig.enabled
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                {startIoConfig.enabled ? 'On' : 'Off'}
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                Banner Ads
+              </span>
+              <button
+                onClick={() =>
+                  setStartIoConfig((prev) => ({
+                    ...prev,
+                    showBanner: !prev.showBanner,
+                  }))
+                }
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  startIoConfig.showBanner
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                }`}
+              >
+                {startIoConfig.showBanner ? 'On' : 'Off'}
+              </button>
+            </div>
+          </div>
+
+          <button
+            onClick={handleShareApp}
+            className="w-full mt-2 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition"
+          >
+            Share App
+          </button>
+
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
+            className="w-full py-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-300 dark:hover:bg-slate-700 transition"
           >
-            <X className="w-5 h-5" />
+            Close
           </button>
         </div>
-
-        {/* Content Body */}
-        <div className="p-5 space-y-3.5">
-          
-          {/* Share App Button */}
-          <button
-            onClick={handleShare}
-            className="w-full p-3.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/80 rounded-xl flex items-center justify-between transition cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-600 text-white rounded-lg group-hover:scale-105 transition">
-                {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-              </div>
-              <div className="text-left">
-                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
-                  {copied ? 'Copied!' : 'Share App'}
-                </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Share this app with your friends
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-              Share
-            </span>
-          </button>
-
-          {/* Privacy Policy Link */}
-          <a
-            href="https://docs.google.com/document/d/1WE176kjz7U1MgTzbevyo5TntbPuAQVeXIEj0CTkVqCA/edit?usp=drivesdk"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full p-3.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between transition cursor-pointer group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-600 text-white rounded-lg group-hover:scale-105 transition">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <div className="text-left">
-                <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
-                  Privacy Policy
-                </h4>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Read our data privacy policy
-                </p>
-              </div>
-            </div>
-            <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
-          </a>
-
-        </div>
-
-        {/* Footer Action */}
-        <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex justify-end shrink-0">
-          <button
-            onClick={onClose}
-            className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer shadow-md shadow-emerald-600/20"
-          >
-            Done
-          </button>
-        </div>
-
       </div>
     </div>
-  );
-};         
+  )
+}
