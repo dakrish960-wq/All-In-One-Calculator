@@ -1,6 +1,7 @@
    import React, { useState } from 'react';
 import { X, ShieldCheck, Share2, ExternalLink, Check } from 'lucide-react';
 import { Language, ThemeMode, StartIoConfig } from '../types';
+import { shareApp } from '../lib/share';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -22,19 +23,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   const handleShare = async () => {
-    const shareData = {
-      title: 'All In One Calculator',
-      text: 'Check out this awesome All In One Calculator App!',
-    };
+    const result = await shareApp();
 
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.log('Error sharing:', err);
-      }
-    } else {
-      navigator.clipboard.writeText(`${shareData.title} - ${shareData.text}`);
+    if (result.method === 'clipboard') {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
