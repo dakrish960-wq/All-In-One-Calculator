@@ -1,7 +1,6 @@
 import React from 'react'
 import { Language, ThemeMode, StartIoConfig } from '../types'
 import { translations } from '../data/translations'
-import { APP_DOWNLOAD_URL, APP_SHARE_TEXT } from '../config/share'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -12,6 +11,7 @@ interface SettingsModalProps {
   setTheme: (theme: ThemeMode) => void
   startIoConfig: StartIoConfig
   setStartIoConfig: React.Dispatch<React.SetStateAction<StartIoConfig>>
+  onShareApp: () => Promise<void> | void
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -23,34 +23,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setTheme,
   startIoConfig,
   setStartIoConfig,
+  onShareApp,
 }) => {
   const t = translations[lang]
 
   if (!isOpen) return null
-
-  const handleShareApp = async () => {
-    const shareData = {
-      title: 'All In One Calculator',
-      text: APP_SHARE_TEXT,
-      url: APP_DOWNLOAD_URL,
-    }
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch (error) {
-        console.log('Share cancelled or failed', error)
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(APP_SHARE_TEXT)
-        alert('Share text copied to clipboard!')
-      } catch (error) {
-        console.log('Clipboard copy failed', error)
-        alert('Could not share or copy the link.')
-      }
-    }
-  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4">
@@ -182,7 +159,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           <button
-            onClick={handleShareApp}
+            onClick={onShareApp}
             className="w-full mt-2 py-3 rounded-xl bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition"
           >
             Share App
