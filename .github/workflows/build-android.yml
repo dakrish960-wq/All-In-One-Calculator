@@ -59,7 +59,8 @@ jobs:
       # 8. Add Android platform
       - name: Add Android platform
         run: |
-          npx cap add android || true
+          rm -rf android
+          npx cap add android
           npx cap sync android
 
       # 9. Configure Android SDK
