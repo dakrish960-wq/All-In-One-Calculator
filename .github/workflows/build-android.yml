@@ -10,59 +10,45 @@ jobs:
   build:
     name: Build Android APK & AAB
     runs-on: ubuntu-latest
-
     env:
       NODE_VERSION: "20"
       JAVA_VERSION: "17"
-      STARTIO_APP_ID: "206473031"
 
     steps:
-
-      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # 3. Java
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         with:
           distribution: "zulu"
           java-version: ${{ env.JAVA_VERSION }}
 
-      # 4. Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 5. Install Android SDK 34
       - name: Install Android SDK
         run: |
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
 
-      # 6. Install dependencies
       - name: Install dependencies
-        run: |
-          npm install --legacy-peer-deps
-          npm install @capacitor/core@^5.0.0 @capacitor/cli@^5.0.0 @capacitor/android@^5.0.0 --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
-      # 7. Build web application
       - name: Build web application
         run: npm run build
 
-      # 8. Add Android platform
       - name: Add Android platform
         run: |
           npx cap add android || true
           npx cap sync android
 
-      # 9. Configure Android SDK
       - name: Configure Android SDK
         run: |
           python3 - <<'PY'
@@ -70,415 +56,45 @@ jobs:
           import re
 
           file = Path("android/variables.gradle")
-
           if not file.exists():
               raise SystemExit("android/variables.gradle not found")
 
           text = file.read_text()
-
-          text = re.sub(
-              r'compileSdkVersion\s*=\s*\d+',
-              'compileSdkVersion = 34',
-              text
-          )
-
-          text = re.sub(
-              r'targetSdkVersion\s*=\s*\d+',
-              'targetSdkVersion = 34',
-              text
-          )
-
-          text = re.sub(
-              r'minSdkVersion\s*=\s*\d+',
-              'minSdkVersion = 22',
-              text
-          )
-
+          text = re.sub(r'compileSdkVersion\s*=\s*\d+', 'compileSdkVersion = 34', text)
+          text = re.sub(r'targetSdkVersion\s*=\s*\d+', 'targetSdkVersion = 34', text)
+          text = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 22', text)
           file.write_text(text)
           PY
 
-      # 10. Add Start.io SDK
-      - name: Add Start.io SDK
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          file = Path("android/app/build.gradle")
-
-          if not file.exists():
-              raise SystemExit("android/app/build.gradle not found")
-
-          text = file.read_text()
-
-          lines = text.splitlines()
-
-          lines = [
-              line for line in lines
-              if "com.startapp:inapp-sdk:" not in line
-          ]
-
-          text = "\n".join(lines) + "\n"
-
-          dependency = "    implementation 'com.startapp:inapp-sdk:5.0.2'"
-
-          if "dependencies {" not in text:
-              raise SystemExit("Gradle dependencies block not found")
-
-          text = text.replace(
-              "dependencies {",
-              "dependencies {\n" + dependency,
-              1
-          )
-
-          file.write_text(text)
-          PY
-
-      # 11. Create Start.io native plugin
-      - name: Create Start.io native plugin
-        run: |
-          PACKAGE_DIR="android/app/src/main/java/com/calculator/app"
-
-          mkdir -p "$PACKAGE_DIR"
-
-          cat > "$PACKAGE_DIR/StartIoPlugin.java" <<'JAVA'
-          package com.calculator.app;
-
-          import android.app.Activity;
-          import android.view.Gravity;
-          import android.view.View;
-          import android.view.ViewGroup;
-          import android.widget.FrameLayout;
-
-          import androidx.annotation.NonNull;
-          import androidx.annotation.Nullable;
-
-          import com.getcapacitor.JSObject;
-          import com.getcapacitor.Plugin;
-          import com.getcapacitor.PluginCall;
-          import com.getcapacitor.PluginMethod;
-          import com.getcapacitor.annotation.CapacitorPlugin;
-
-          import com.startapp.sdk.adsbase.Ad;
-          import com.startapp.sdk.adsbase.StartAppAd;
-          import com.startapp.sdk.adsbase.StartAppSDK;
-          import com.startapp.sdk.adsbase.adlisteners.AdEventListener;
-          import com.startapp.sdk.ads.banner.Banner;
-          import com.startapp.sdk.ads.banner.BannerListener;
-
-          @CapacitorPlugin(name = "StartIo")
-          public class StartIoPlugin extends Plugin {
-
-              private static final String APP_ID = "206473031";
-
-              private StartAppAd interstitialAd;
-              private boolean adReady = false;
-
-              private Banner banner;
-              private FrameLayout bannerContainer;
-
-              @Override
-              public void load() {
-                  super.load();
-
-                  Activity activity = getActivity();
-
-                  if (activity == null) {
-                      return;
-                  }
-
-                  StartAppSDK.initParams(activity, APP_ID)
-                          .setReturnAdsEnabled(false)
-                          .setCallback(new Runnable() {
-                              @Override
-                              public void run() {
-                                  loadInterstitialInternal();
-                                  showBanner();
-                              }
-                          })
-                          .init();
-
-                  // LIVE / PRODUCTION ADS
-                  StartAppSDK.setTestAdsEnabled(false);
-              }
-
-              private void loadInterstitialInternal() {
-
-                  Activity activity = getActivity();
-
-                  if (activity == null) {
-                      return;
-                  }
-
-                  activity.runOnUiThread(() -> {
-
-                      interstitialAd = new StartAppAd(activity);
-                      adReady = false;
-
-                      interstitialAd.loadAd(new AdEventListener() {
-
-                          @Override
-                          public void onReceiveAd(@NonNull Ad ad) {
-                              adReady = true;
-                          }
-
-                          @Override
-                          public void onFailedToReceiveAd(@Nullable Ad ad) {
-                              adReady = false;
-                          }
-                      });
-                  });
-              }
-
-              private void showBanner() {
-
-                  Activity activity = getActivity();
-
-                  if (activity == null) {
-                      return;
-                  }
-
-                  activity.runOnUiThread(() -> {
-
-                      if (banner != null) {
-                          return;
-                      }
-
-                      ViewGroup root =
-                              activity.findViewById(android.R.id.content);
-
-                      if (root == null) {
-                          return;
-                      }
-
-                      bannerContainer = new FrameLayout(activity);
-
-                      FrameLayout.LayoutParams containerParams =
-                              new FrameLayout.LayoutParams(
-                                      ViewGroup.LayoutParams.MATCH_PARENT,
-                                      ViewGroup.LayoutParams.WRAP_CONTENT
-                              );
-
-                      containerParams.gravity =
-                              Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-
-                      containerParams.bottomMargin = 60;
-
-                      bannerContainer.setLayoutParams(containerParams);
-
-                      banner = new Banner(
-                              activity,
-                              new BannerListener() {
-
-                                  @Override
-                                  public void onReceiveAd(View view) {
-                                  }
-
-                                  @Override
-                                  public void onFailedToReceiveAd(View view) {
-                                  }
-
-                                  @Override
-                                  public void onImpression(View view) {
-                                  }
-
-                                  @Override
-                                  public void onClick(View view) {
-                                  }
-                              }
-                      );
-
-                      FrameLayout.LayoutParams bannerParams =
-                              new FrameLayout.LayoutParams(
-                                      ViewGroup.LayoutParams.WRAP_CONTENT,
-                                      ViewGroup.LayoutParams.WRAP_CONTENT
-                              );
-
-                      bannerParams.gravity =
-                              Gravity.CENTER_HORIZONTAL;
-
-                      bannerContainer.addView(
-                              banner,
-                              bannerParams
-                      );
-
-                      root.addView(
-                              bannerContainer,
-                              containerParams
-                      );
-                  });
-              }
-
-              @PluginMethod
-              public void loadInterstitial(PluginCall call) {
-
-                  loadInterstitialInternal();
-
-                  JSObject result = new JSObject();
-                  result.put("started", true);
-
-                  call.resolve(result);
-              }
-
-              @PluginMethod
-              public void showInterstitial(PluginCall call) {
-
-                  Activity activity = getActivity();
-
-                  if (activity == null) {
-                      call.reject("Activity is not available");
-                      return;
-                  }
-
-                  activity.runOnUiThread(() -> {
-
-                      if (interstitialAd == null || !adReady) {
-
-                          JSObject result = new JSObject();
-
-                          result.put("shown", false);
-                          result.put(
-                                  "reason",
-                                  "Ad is not ready"
-                          );
-
-                          call.resolve(result);
-
-                          return;
-                      }
-
-                      interstitialAd.showAd();
-
-                      adReady = false;
-
-                      JSObject result = new JSObject();
-                      result.put("shown", true);
-
-                      call.resolve(result);
-
-                      loadInterstitialInternal();
-                  });
-              }
-          }
-          JAVA
-
-      # 12. Register Start.io plugin
-      - name: Register Start.io plugin
-        run: |
-          MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -n 1)
-
-          if [ -z "$MAIN_ACTIVITY" ]; then
-            echo "MainActivity.java was not found."
-            exit 1
-          fi
-
-          python3 - "$MAIN_ACTIVITY" <<'PY'
-          import sys
-          from pathlib import Path
-
-          file = Path(sys.argv[1])
-          text = file.read_text()
-
-          import_line = "import com.calculator.app.StartIoPlugin;"
-
-          if import_line not in text:
-              text = text.replace(
-                  "import com.getcapacitor.BridgeActivity;",
-                  "import com.getcapacitor.BridgeActivity;\n"
-                  + import_line
-              )
-
-          if "registerPlugin(StartIoPlugin.class);" not in text:
-
-              marker = "public class MainActivity extends BridgeActivity {"
-
-              if marker not in text:
-                  raise SystemExit(
-                      "MainActivity class declaration not found"
-                  )
-
-              replacement = (
-                  marker
-                  + "\n\n"
-                  + "    @Override\n"
-                  + "    public void onCreate(android.os.Bundle savedInstanceState) {\n"
-                  + "        super.onCreate(savedInstanceState);\n"
-                  + "        registerPlugin(StartIoPlugin.class);\n"
-                  + "    }\n"
-              )
-
-              text = text.replace(
-                  marker,
-                  replacement,
-                  1
-              )
-
-          file.write_text(text)
-          PY
-
-      # 13. Create Start.io JavaScript bridge
-      - name: Create Start.io JavaScript bridge
-        run: |
-          mkdir -p src/lib
-
-          cat > src/lib/startIo.ts <<'EOF'
-          import { registerPlugin } from '@capacitor/core';
-
-          export interface StartIoPlugin {
-
-            loadInterstitial(): Promise<{
-              started: boolean;
-            }>;
-
-            showInterstitial(): Promise<{
-              shown: boolean;
-              reason?: string;
-            }>;
-
-          }
-
-          export const StartIo =
-            registerPlugin<StartIoPlugin>('StartIo');
-          EOF
-
-      # 14. Sync Capacitor
       - name: Sync Capacitor
-        run: |
-          npx cap sync android
+        run: npx cap sync android
 
-      # 15. Build Debug APK
       - name: Build Debug APK
         working-directory: android
         run: |
           chmod +x ./gradlew
           ./gradlew clean assembleDebug --no-daemon --stacktrace
 
-      # 16. Build Release APK
       - name: Build Release APK
         working-directory: android
-        run: |
-          ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-      # 17. Build Release AAB
       - name: Build Release AAB
         working-directory: android
-        run: |
-          ./gradlew bundleRelease --no-daemon --stacktrace
+        run: ./gradlew bundleRelease --no-daemon --stacktrace
 
-      # 18. Upload Debug APK
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: calculator-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
 
-      # 19. Upload Release APK
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: calculator-release-apk
           path: android/app/build/outputs/apk/release/*.apk
 
-      # 20. Upload Release AAB
       - name: Upload Release AAB
         uses: actions/upload-artifact@v4
         with:

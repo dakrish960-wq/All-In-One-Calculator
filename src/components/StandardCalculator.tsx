@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { CalculatorType, Language } from '../types'
+import React, { useState } from 'react'
+import { Language } from '../types'
 import { translations } from '../data/translations'
 
 interface StandardCalculatorProps {
@@ -12,17 +12,6 @@ export const StandardCalculator: React.FC<StandardCalculatorProps> = ({ lang }) 
   const [previousValue, setPreviousValue] = useState<number | null>(null)
   const [operation, setOperation] = useState<string | null>(null)
   const [newNumber, setNewNumber] = useState(true)
-  const [showAd, setShowAd] = useState(false)
-
-  useEffect(() => {
-    // Show ad after 5 calculations
-    const calculateCount = parseInt(localStorage.getItem('calculateCount') || '0')
-    if (calculateCount > 0 && calculateCount % 5 === 0) {
-      setShowAd(true)
-      setTimeout(() => setShowAd(false), 3000)
-    }
-  }, [display])
-
   const handleNumber = (num: string) => {
     if (newNumber) {
       setDisplay(num)
@@ -105,13 +94,6 @@ export const StandardCalculator: React.FC<StandardCalculatorProps> = ({ lang }) 
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Ad Banner */}
-      {showAd && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl text-white text-center text-sm font-bold">
-          📢 Advertisement Area - Start.io Ads will appear here
-        </div>
-      )}
-
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-6 border border-slate-200 dark:border-slate-800">
         {/* Display */}
         <div className="mb-6 p-4 bg-slate-900 dark:bg-slate-800 rounded-2xl">
@@ -253,11 +235,6 @@ export const StandardCalculator: React.FC<StandardCalculatorProps> = ({ lang }) 
         </div>
       </div>
 
-      {/* Ad Section */}
-      <div className="mt-6 p-6 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-slate-300 dark:border-slate-700 text-center">
-        <h3 className="text-sm font-bold text-slate-600 dark:text-slate-400 mb-2">📺 Advertisement Space</h3>
-        <p className="text-xs text-slate-500 dark:text-slate-500">Start.io Ads (ID: 208473910) will display here in production</p>
-      </div>
     </div>
   )
 }

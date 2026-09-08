@@ -156,9 +156,6 @@ export const translations = {
     standardSubtitle: 'Everyday math & scientific calculator with calculation history',
     historyLog: 'Calculation Tape History',
 
-    // Ads & Policy
-    startIoAd: 'Start.io Ad Unit (Simulated)',
-    startIoStatus: 'Start.io SDK Ready',
     playStoreReady: 'Play Store Ready & Compliant',
     privacyPolicy: 'Privacy Policy',
     termsOfService: 'Terms of Service',
@@ -321,9 +318,6 @@ export const translations = {
     standardSubtitle: 'দৈনন্দিন অংক ও সায়েন্টিফিক গণনা এবং হিস্ট্রি দেখার সুবিধা',
     historyLog: 'গণনার ইতিহাস (Tape History)',
 
-    // Ads & Policy
-    startIoAd: 'Start.io অ্যাড ইউনিট (Simulated)',
-    startIoStatus: 'Start.io SDK প্রস্তুত',
     playStoreReady: 'প্লে স্টোরের জন্য ১০০% প্রস্তুত',
     privacyPolicy: 'প্রাইভেসি পলিসি',
     termsOfService: 'শর্তাবলী',

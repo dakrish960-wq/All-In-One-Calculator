@@ -18,7 +18,6 @@ export const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose }) => 
 **App Title:** All In One Calculator
 **Package Name:** com.calculator.app
 **Target Platform:** Android (Google Play Store) & Web SPA
-**Monetization Network:** Start.io SDK Integration (Banner & Interstitial Ads)
 **Key Architecture:** 100% Offline-First execution, ultra-fast performance, zero external API latency dependencies, offline currency rates fallback engine.
 
 ---
@@ -71,7 +70,7 @@ export const PromptModal: React.FC<PromptModalProps> = ({ isOpen, onClose }) => 
 - Fully compliant with Google Play Content & Data Safety Policies.
 - Embedded Privacy Policy & Terms of Service text.
 - Package ID \`com.calculator.app\` verified.
-- Non-intrusive Start.io Ad banner integration.`;
+- No advertising or tracking integrations.`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(englishPrompt);

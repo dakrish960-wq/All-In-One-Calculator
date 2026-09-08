@@ -30,11 +30,3 @@ export interface HistoryItem {
   result: string;
   timestamp: number;
 }
-
-export interface StartIoConfig {
-  appId: string;
-  enabled: boolean;
-  showBanner: boolean;
-  showInterstitialOnSwitch: boolean;
-  testMode: boolean;
-}

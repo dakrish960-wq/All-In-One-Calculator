@@ -18,30 +18,23 @@ All In One Calculator ("we," "us," "our," or "Company") is committed to protecti
 - All data remains on your phone - never sent to our servers
 - You can clear history anytime in settings
 
-## 2. Third-Party Services
-
-### Ads (Start.io)
-- We may display ads through Start.io
-- Start.io may collect limited ad-related data per their privacy policy
-- You can disable ads in settings
-
-## 3. Data Security
+## 2. Data Security
 
 - Your device is the only place where your data exists
 - No cloud backup - no risk of data breach
 - All calculations are done locally on your device
 
-## 4. Children's Privacy
+## 3. Children's Privacy
 
 - Our app is suitable for all ages
 - No collection of information from children
 - No in-app purchases or age-restricted content
 
-## 5. Changes to This Policy
+## 4. Changes to This Policy
 
 We may update this policy occasionally. Continued use of the app means you accept the updated terms.
 
-## 6. Contact Us
+## 5. Contact Us
 
 For privacy concerns, contact us at:
 - **Email:** dakrish960@gmail.com

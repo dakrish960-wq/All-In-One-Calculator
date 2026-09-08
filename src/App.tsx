@@ -8,10 +8,8 @@ import { ViralCalculator } from './components/ViralCalculator'
 import { WeightCalculator } from './components/WeightCalculator'
 import { CurrencyCalculator } from './components/CurrencyCalculator'
 import { LoveCalculator } from './components/LoveCalculator'
-import { AdBanner } from './components/AdBanner'
 import { SettingsModal } from './components/SettingsModal'
-import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
-import { StartIo } from './lib/startIo'
+import { CalculatorType, Language, ThemeMode } from './types'
 import { APP_DOWNLOAD_URL, APP_SHARE_TEXT } from './config/share'
 import './App.css'
 
@@ -20,14 +18,6 @@ function App() {
   const [theme, setTheme] = useState<ThemeMode>('light')
   const [activeTab, setActiveTab] = useState<CalculatorType>('standard')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-
-  const [startIoConfig, setStartIoConfig] = useState<StartIoConfig>({
-    appId: '206473031', // Live Ad ID
-    enabled: true,
-    showBanner: true,
-    showInterstitialOnSwitch: true,
-    testMode: false,
-  })
 
   const handleShareApp = async () => {
     const shareData = {
@@ -53,20 +43,6 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    console.log('🚀 App initialized - Start.io Live Ads enabled (ID: 206473031)')
-    if (startIoConfig.enabled) {
-      try {
-        if (window.StartAppAds) {
-          window.StartAppAds.init()
-          console.log('✅ Start.io SDK initialized')
-        }
-      } catch (error) {
-        console.log('ℹ️ Start.io ready for ads')
-      }
-    }
-  }, [startIoConfig.enabled])
-
   return (
     <div
       className={
@@ -84,10 +60,6 @@ function App() {
       />
 
       <main className="flex-1 max-w-lg w-full mx-auto px-4 pt-3 pb-2 overflow-y-auto space-y-4">
-        {startIoConfig.enabled && startIoConfig.showBanner && (
-          <AdBanner config={startIoConfig} />
-        )}
-
         <div className="w-full">
           {activeTab === 'standard' && <StandardCalculator lang={lang} />}
           {activeTab === 'age' && <AgeCalculator lang={lang} />}
@@ -97,10 +69,6 @@ function App() {
           {activeTab === 'currency' && <CurrencyCalculator lang={lang} />}
           {activeTab === 'love' && <LoveCalculator lang={lang} />}
         </div>
-
-        {startIoConfig.enabled && startIoConfig.showBanner && (
-          <AdBanner config={startIoConfig} />
-        )}
 
         <div className="pt-2 pb-2 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 gap-3 text-center">
           <a
@@ -140,8 +108,6 @@ function App() {
         setLang={setLang}
         theme={theme}
         setTheme={setTheme}
-        startIoConfig={startIoConfig}
-        setStartIoConfig={setStartIoConfig}
         onShareApp={handleShareApp}
       />
     </div>

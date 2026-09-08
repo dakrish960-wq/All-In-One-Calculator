@@ -1,5 +1,5 @@
 import React from 'react'
-import { Language, ThemeMode, StartIoConfig } from '../types'
+import { Language, ThemeMode } from '../types'
 import { translations } from '../data/translations'
 
 interface SettingsModalProps {
@@ -9,8 +9,6 @@ interface SettingsModalProps {
   setLang: (lang: Language) => void
   theme: ThemeMode
   setTheme: (theme: ThemeMode) => void
-  startIoConfig: StartIoConfig
-  setStartIoConfig: React.Dispatch<React.SetStateAction<StartIoConfig>>
   onShareApp: () => Promise<void> | void
 }
 
@@ -21,8 +19,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setLang,
   theme,
   setTheme,
-  startIoConfig,
-  setStartIoConfig,
   onShareApp,
 }) => {
   const t = translations[lang]
@@ -107,53 +103,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 }`}
               >
                 System
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-            <h3 className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">
-              Ads
-            </h3>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
-                Enable Ads
-              </span>
-              <button
-                onClick={() =>
-                  setStartIoConfig((prev) => ({
-                    ...prev,
-                    enabled: !prev.enabled,
-                  }))
-                }
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  startIoConfig.enabled
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                }`}
-              >
-                {startIoConfig.enabled ? 'On' : 'Off'}
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-slate-600 dark:text-slate-400">
-                Banner Ads
-              </span>
-              <button
-                onClick={() =>
-                  setStartIoConfig((prev) => ({
-                    ...prev,
-                    showBanner: !prev.showBanner,
-                  }))
-                }
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  startIoConfig.showBanner
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                }`}
-              >
-                {startIoConfig.showBanner ? 'On' : 'Off'}
               </button>
             </div>
           </div>
