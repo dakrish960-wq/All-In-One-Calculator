@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
+import { Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 export const ClockCalendar: React.FC = () => {
   const [time, setTime] = useState<Date>(new Date());
@@ -81,79 +81,58 @@ export const ClockCalendar: React.FC = () => {
   };
 
   return (
-    <div className="w-full my-3">
-      {/* Eye-catching Clock & Calendar Top Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 border border-indigo-500/30 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
-        
+    <div className="w-full mb-3">
+      {/* Compact live clock and calendar cards for the fast page */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white p-2.5 border border-indigo-500/30 shadow-lg">
         {/* Background decorative glow elements */}
         <div className="absolute -right-8 -top-8 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -left-8 -bottom-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Clock Section (Prominent & Eye-catching) */}
-        <div className="flex items-center gap-3.5 w-full md:w-auto justify-between md:justify-start">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0 font-black">
-              <Clock className="w-6 h-6 stroke-[2.5]" />
+        <div className="relative grid grid-cols-2 gap-2">
+          {/* Digital clock */}
+          <div className="flex min-w-0 items-center gap-2 rounded-xl bg-white/5 px-2.5 py-2 ring-1 ring-white/10">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-slate-950">
+              <Clock className="h-4 w-4 stroke-[2.5]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                  Live Clock
-                </span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="truncate text-[9px] font-bold uppercase tracking-wider text-amber-400">Live time</span>
                 <button
                   onClick={() => setIs24Hour(!is24Hour)}
-                  className="text-[10px] font-mono font-semibold text-slate-400 hover:text-white underline cursor-pointer"
+                  className="shrink-0 text-[9px] font-mono font-semibold text-slate-400 hover:text-white underline cursor-pointer"
                   title="Toggle 12h/24h Format"
                 >
-                  {is24Hour ? '24-Hour' : '12-Hour'}
+                  {is24Hour ? '24h' : '12h'}
                 </button>
               </div>
-              {/* Extra prominent clock time */}
-              <div className="text-2xl sm:text-3xl font-black font-mono tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-orange-200 to-amber-400 drop-shadow-sm mt-0.5">
+              <div className="truncate text-sm font-black font-mono tracking-tight text-amber-100 sm:text-base">
                 {formatTime()}
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Divider for desktop */}
-        <div className="hidden md:block h-10 w-px bg-slate-800" />
-
-        {/* Calendar Section (Prominent Date & Interactive Toggle) */}
-        <div className="flex items-center justify-between w-full md:w-auto gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0 font-black">
-              <CalendarIcon className="w-6 h-6 stroke-[2.5]" />
+          {/* Compact calendar */}
+          <div className="flex min-w-0 items-center gap-2 rounded-xl bg-white/5 px-2.5 py-2 ring-1 ring-white/10">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+              <CalendarIcon className="h-4 w-4 stroke-[2.5]" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded-md border border-indigo-500/30">
-                  Today's Date
-                </span>
-                <span className="text-xs font-semibold text-amber-400 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  {dayName}
-                </span>
-              </div>
-              <div className="text-base sm:text-lg font-bold text-white tracking-wide mt-0.5">
-                {fullDateStr}
-              </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[9px] font-bold uppercase tracking-wider text-indigo-300">Today · {dayName}</div>
+              <div className="truncate text-xs font-bold text-white sm:text-sm">{fullDateStr}</div>
             </div>
+            <button
+              onClick={() => {
+                setCalendarViewDate(new Date());
+                setShowCalendarModal(true);
+              }}
+              className="shrink-0 rounded-lg bg-indigo-600/80 p-1.5 text-white transition hover:bg-indigo-500 cursor-pointer"
+              aria-label="Open calendar"
+              title="Open Calendar"
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+            </button>
           </div>
-
-          {/* Calendar View Button */}
-          <button
-            onClick={() => {
-              setCalendarViewDate(new Date());
-              setShowCalendarModal(true);
-            }}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600/80 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-md border border-indigo-400/30 cursor-pointer shrink-0"
-          >
-            <CalendarIcon className="w-3.5 h-3.5" />
-            <span>Open Calendar</span>
-          </button>
         </div>
-      </div>
 
       {/* Interactive Full Calendar Modal */}
       {showCalendarModal && (

@@ -10,6 +10,7 @@ import { CurrencyCalculator } from './components/CurrencyCalculator'
 import { LoveCalculator } from './components/LoveCalculator'
 import { AdBanner } from './components/AdBanner'
 import { SettingsModal } from './components/SettingsModal'
+import { ClockCalendar } from './components/ClockCalendar'
 import { CalculatorType, Language, ThemeMode, StartIoConfig } from './types'
 import { StartIo } from './lib/startIo'
 import { APP_DOWNLOAD_URL, APP_SHARE_TEXT } from './config/share'
@@ -89,7 +90,12 @@ function App() {
         )}
 
         <div className="w-full">
-          {activeTab === 'standard' && <StandardCalculator lang={lang} />}
+          {activeTab === 'standard' && (
+            <>
+              <ClockCalendar />
+              <StandardCalculator lang={lang} />
+            </>
+          )}
           {activeTab === 'age' && <AgeCalculator lang={lang} />}
           {activeTab === 'gold' && <GoldCalculator lang={lang} />}
           {activeTab === 'viral' && <ViralCalculator lang={lang} />}
