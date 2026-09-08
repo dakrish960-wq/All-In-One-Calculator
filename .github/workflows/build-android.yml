@@ -46,28 +46,9 @@ jobs:
 
       - name: Add Android platform
         run: |
-          npx cap add android || true
+          rm -rf android
+          npx cap add android
           npx cap sync android
-
-      - name: Configure Android SDK
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          file = Path("android/variables.gradle")
-          if not file.exists():
-              raise SystemExit("android/variables.gradle not found")
-
-          text = file.read_text()
-          text = re.sub(r'compileSdkVersion\s*=\s*\d+', 'compileSdkVersion = 34', text)
-          text = re.sub(r'targetSdkVersion\s*=\s*\d+', 'targetSdkVersion = 34', text)
-          text = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 22', text)
-          file.write_text(text)
-          PY
-
-      - name: Sync Capacitor
-        run: npx cap sync android
 
       - name: Build Debug APK
         working-directory: android
