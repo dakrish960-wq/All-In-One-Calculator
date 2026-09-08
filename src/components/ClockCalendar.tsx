@@ -133,6 +133,7 @@ export const ClockCalendar: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
 
       {/* Interactive Full Calendar Modal */}
       {showCalendarModal && (
