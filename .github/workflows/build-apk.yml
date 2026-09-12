@@ -37,10 +37,16 @@ jobs:
         run: mkdir -p build-logs
 
       - name: Install npm dependencies
-        run: npm install 2>&1 | tee build-logs/npm-install.log
+        shell: bash
+        run: |
+          set -o pipefail
+          npm install 2>&1 | tee build-logs/npm-install.log
 
       - name: Ensure Capacitor Android package
-        run: npm install @capacitor/android@^5.0.0 --no-save 2>&1 | tee build-logs/capacitor-android-install.log
+        shell: bash
+        run: |
+          set -o pipefail
+          npm install @capacitor/android@^5.0.0 --no-save 2>&1 | tee build-logs/capacitor-android-install.log
 
       - name: Build React web app
         shell: bash
@@ -68,7 +74,7 @@ jobs:
 
       - name: Build release APK
         shell: bash
-        working-directory: /home/runner/work/All-In-One-Calculator/All-In-One-Calculator/android
+        working-directory: android
         run: |
           set -o pipefail
           chmod +x ./gradlew
