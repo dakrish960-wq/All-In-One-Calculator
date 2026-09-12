@@ -1,0 +1,92 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 34
+        run: |
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Prepare build logs directory
+        run: mkdir -p build-logs
+
+      - name: Install npm dependencies
+        run: npm install 2>&1 | tee build-logs/npm-install.log
+
+      - name: Ensure Capacitor Android package
+        run: npm install @capacitor/android@^5.0.0 --no-save 2>&1 | tee build-logs/capacitor-android-install.log
+
+      - name: Build React web app
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build-logs/web-build.log
+
+      - name: Initialize Capacitor if needed
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap init --web-dir=dist com.calculator.allinone "All In One Calculator"
+          fi
+
+      - name: Add Capacitor Android platform
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Sync Capacitor Android
+        shell: bash
+        run: |
+          set -o pipefail
+          npx cap sync android 2>&1 | tee build-logs/capacitor-sync.log
+
+      - name: Build release APK
+        shell: bash
+        working-directory: /home/runner/work/All-In-One-Calculator/All-In-One-Calculator/android
+        run: |
+          set -o pipefail
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee ../build-logs/gradle-assemble-release.log
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build-logs
+          retention-days: 30
+          if-no-files-found: warn
