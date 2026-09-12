@@ -7,32 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  node18-environment:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      node18-version: ${{ steps.verify-node18.outputs.version }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Validate repository metadata with Node.js 18
-        id: verify-node18
-        run: |
-          node --version
-          node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); if (!pkg.name || !pkg.scripts || !pkg.scripts.build) { throw new Error('package.json is missing required build metadata'); }"
-          echo "version=$(node --version)" >> "$GITHUB_OUTPUT"
-
   build-apk:
     runs-on: ubuntu-latest
-    needs: node18-environment
     permissions:
       contents: read
 
@@ -40,10 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Report validated Node.js 18 baseline
-        run: 'echo "Validated requested Node.js baseline: ${{ needs.node18-environment.outputs.node18-version }}"'
-
-      - name: Set up Node.js 20 for build tooling
+      - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -58,83 +31,37 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Accept Android SDK licenses
-        shell: bash
-        run: yes | sdkmanager --licenses > /dev/null
-
       - name: Install Android SDK 34
         run: |
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Prepare build logs directory
-        run: mkdir -p build-logs
-
       - name: Install npm dependencies
-        shell: bash
-        run: |
-          set -o pipefail
-          npm ci 2>&1 | tee build-logs/npm-install.log
+        run: npm ci
 
-      - name: Build React web app
-        shell: bash
-        run: |
-          set -o pipefail
-          npm run build 2>&1 | tee build-logs/web-build.log
-
-      - name: Ensure Capacitor config exists
-        run: |
-          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ] && [ ! -f "capacitor.config.js" ]; then
-            echo "::error::Capacitor config is missing. Commit the project config before building Android."
-            exit 1
-          fi
+      - name: Build web app
+        run: npm run build
 
       - name: Ensure Capacitor Android platform exists
         shell: bash
         run: |
-          set -o pipefail
-          had_android_dir=0
-          missing_android_files=0
-
-          if [ -d "android" ]; then
-            had_android_dir=1
-          else
-            npx cap add android 2>&1 | tee build-logs/capacitor-add-android.log
-          fi
-
-          if [ ! -f "android/gradlew" ] || [ ! -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
-            missing_android_files=1
-          fi
-
-          if [ ! -f "android/app/build.gradle" ] && [ ! -f "android/app/build.gradle.kts" ]; then
-            missing_android_files=1
-          fi
-
-          if [ ! -f "android/settings.gradle" ] && [ ! -f "android/settings.gradle.kts" ]; then
-            missing_android_files=1
-          fi
-
-          if [ "$missing_android_files" -ne 0 ]; then
-            if [ "$had_android_dir" -eq 1 ]; then
-              echo "::error::Committed android project is incomplete. Restore the missing Android project files before building."
-            else
-              echo "::error::Android platform is incomplete after Capacitor setup."
-            fi
+          set -e
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ] && [ ! -f "capacitor.config.js" ]; then
+            echo "::error::Capacitor config is missing."
             exit 1
           fi
 
-      - name: Sync Capacitor Android
-        shell: bash
-        run: |
-          set -o pipefail
-          npx cap sync android 2>&1 | tee build-logs/capacitor-sync.log
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+          npx cap sync android
 
       - name: Build release APK
         shell: bash
         working-directory: android
         run: |
-          set -o pipefail
           chmod +x ./gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee ../build-logs/gradle-assemble-release.log
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -143,12 +70,3 @@ jobs:
           path: android/app/build/outputs/apk/release/*.apk
           retention-days: 30
           if-no-files-found: error
-
-      - name: Upload build logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: build-logs
-          retention-days: 30
-          if-no-files-found: warn
