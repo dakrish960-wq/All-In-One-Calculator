@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      node18-version: ${{ steps.verify-node18.outputs.version }}
 
     steps:
       - name: Set up Node.js 18
@@ -19,16 +21,21 @@ jobs:
           node-version: "18"
 
       - name: Confirm Node.js 18
-        run: node --version
+        id: verify-node18
+        run: echo "version=$(node --version)" >> "$GITHUB_OUTPUT"
 
   build-apk:
     runs-on: ubuntu-latest
+    needs: node18-environment
     permissions:
       contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Report validated Node.js 18 baseline
+        run: echo "Validated requested Node.js baseline: ${{ needs.node18-environment.outputs.node18-version }}"
 
       - name: Set up Node.js 20 for build tooling
         uses: actions/setup-node@v4
@@ -84,16 +91,17 @@ jobs:
             npx cap add android 2>&1 | tee build-logs/capacitor-add-android.log
           fi
 
-          for required_file in \
-            android/gradlew \
-            android/app/build.gradle \
-            android/settings.gradle \
-            android/gradle/wrapper/gradle-wrapper.properties
-          do
-            if [ ! -f "$required_file" ]; then
-              missing_android_files=1
-            fi
-          done
+          if [ ! -f "android/gradlew" ] || [ ! -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
+            missing_android_files=1
+          fi
+
+          if [ ! -f "android/app/build.gradle" ] && [ ! -f "android/app/build.gradle.kts" ]; then
+            missing_android_files=1
+          fi
+
+          if [ ! -f "android/settings.gradle" ] && [ ! -f "android/settings.gradle.kts" ]; then
+            missing_android_files=1
+          fi
 
           if [ "$missing_android_files" -ne 0 ]; then
             if [ "$had_android_dir" -eq 1 ]; then
