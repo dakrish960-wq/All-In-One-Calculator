@@ -9,6 +9,8 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -42,12 +44,6 @@ jobs:
           set -o pipefail
           npm install 2>&1 | tee build-logs/npm-install.log
 
-      - name: Ensure Capacitor Android package
-        shell: bash
-        run: |
-          set -o pipefail
-          npm install @capacitor/android@^5.0.0 --no-save 2>&1 | tee build-logs/capacitor-android-install.log
-
       - name: Build React web app
         shell: bash
         run: |
@@ -56,7 +52,7 @@ jobs:
 
       - name: Initialize Capacitor if needed
         run: |
-          if [ ! -d "android" ]; then
+          if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ] && [ ! -f "capacitor.config.js" ]; then
             npx cap init --web-dir=dist com.calculator.allinone "All In One Calculator"
           fi
 
