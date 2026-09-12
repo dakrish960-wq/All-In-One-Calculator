@@ -66,13 +66,13 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          if [ ! -f "android/gradlew" ]; then
+          if [ ! -f "android/gradlew" ] || [ ! -f "android/app/build.gradle" ] || [ ! -f "android/settings.gradle" ] || [ ! -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
             rm -rf android
             npx cap add android 2>&1 | tee build-logs/capacitor-add-android.log
           fi
 
-          if [ ! -f "android/gradlew" ]; then
-            echo "::error::Android platform is incomplete. Expected android/gradlew after Capacitor setup."
+          if [ ! -f "android/gradlew" ] || [ ! -f "android/app/build.gradle" ] || [ ! -f "android/settings.gradle" ] || [ ! -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
+            echo "::error::Android platform is incomplete after Capacitor setup."
             exit 1
           fi
 
