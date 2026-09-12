@@ -1,7 +1,13 @@
-name: Android CI - Build APK & AAB
+name: Build Android Release APK
 
 on:
   workflow_dispatch:
+    inputs:
+      include_aab:
+        description: "Also build and upload release AAB"
+        required: false
+        type: boolean
+        default: true
   push:
     branches:
       - main
@@ -458,29 +464,80 @@ jobs:
         run: |
           ./gradlew assembleRelease --no-daemon --stacktrace
 
-      # 17. Build Release AAB
+      # 17. Validate optional signing inputs
+      - name: Validate signing inputs
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          provided=0
+          for key in SIGNING_KEY KEY_ALIAS KEY_STORE_PASSWORD KEY_PASSWORD; do
+            if [ -n "${!key}" ]; then
+              provided=$((provided + 1))
+            fi
+          done
+
+          if [ "$provided" -gt 0 ] && [ "$provided" -lt 4 ]; then
+            echo "::error::Incomplete signing setup. Set all of SIGNING_KEY, KEY_ALIAS, KEY_STORE_PASSWORD and KEY_PASSWORD, or leave all unset to upload the unsigned release APK artifact."
+            exit 1
+          fi
+
+      # 18. Sign Release APK (optional)
+      - name: Sign Release APK
+        if: ${{ secrets.SIGNING_KEY != '' && secrets.KEY_ALIAS != '' && secrets.KEY_STORE_PASSWORD != '' && secrets.KEY_PASSWORD != '' }}
+        id: sign_release
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      # 19. Build Release AAB
       - name: Build Release AAB
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.include_aab }}
         working-directory: android
         run: |
           ./gradlew bundleRelease --no-daemon --stacktrace
 
-      # 18. Upload Debug APK
+      # 20. Upload Debug APK
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: calculator-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
 
-      # 19. Upload Release APK
-      - name: Upload Release APK
+      # 21. Upload Signed Release APK
+      - name: Upload Signed Release APK
+        if: ${{ steps.sign_release.outcome == 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: calculator-release-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          path: ${{ steps.sign_release.outputs.signedReleaseFile }}
+          if-no-files-found: error
 
-      # 20. Upload Release AAB
+      # 22. Upload Unsigned Release APK
+      - name: Upload Unsigned Release APK
+        if: ${{ steps.sign_release.outcome != 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: calculator-release-apk
+          path: android/app/build/outputs/apk/release/*-unsigned.apk
+          if-no-files-found: error
+
+      # 23. Upload Release AAB
       - name: Upload Release AAB
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.include_aab }}
         uses: actions/upload-artifact@v4
         with:
           name: calculator-release-aab
           path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
