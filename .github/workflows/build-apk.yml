@@ -7,6 +7,20 @@ on:
   workflow_dispatch:
 
 jobs:
+  node18-environment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Set up Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Confirm Node.js 18
+        run: node --version
+
   build-apk:
     runs-on: ubuntu-latest
     permissions:
@@ -15,11 +29,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up Node.js 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
 
       - name: Set up Node.js 20 for build tooling
         uses: actions/setup-node@v4
