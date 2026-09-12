@@ -15,14 +15,20 @@ jobs:
       node18-version: ${{ steps.verify-node18.outputs.version }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Set up Node.js 18
         uses: actions/setup-node@v4
         with:
           node-version: "18"
 
-      - name: Confirm Node.js 18
+      - name: Validate repository metadata with Node.js 18
         id: verify-node18
-        run: echo "version=$(node --version)" >> "$GITHUB_OUTPUT"
+        run: |
+          node --version
+          node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); if (!pkg.name || !pkg.scripts || !pkg.scripts.build) { throw new Error('package.json is missing required build metadata'); }"
+          echo "version=$(node --version)" >> "$GITHUB_OUTPUT"
 
   build-apk:
     runs-on: ubuntu-latest
@@ -51,6 +57,10 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licenses
+        shell: bash
+        run: yes | sdkmanager --licenses > /dev/null
 
       - name: Install Android SDK 34
         run: |
