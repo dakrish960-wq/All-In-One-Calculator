@@ -458,14 +458,9 @@ jobs:
           chmod +x ./gradlew
           ./gradlew clean assembleDebug --no-daemon --stacktrace
 
-      # 16. Build Release APK
-      - name: Build Release APK
-        working-directory: android
-        run: |
-          ./gradlew assembleRelease --no-daemon --stacktrace
-
-      # 17. Validate optional signing inputs
+      # 16. Validate optional signing inputs
       - name: Validate signing inputs
+        id: validate_signing
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -482,13 +477,34 @@ jobs:
           done
 
           if [ "$provided" -gt 0 ] && [ "$provided" -lt 4 ]; then
-            echo "::error::Incomplete signing setup. Set all of SIGNING_KEY, KEY_ALIAS, KEY_STORE_PASSWORD and KEY_PASSWORD, or leave all unset to upload the unsigned release APK artifact."
+            echo "::error::Incomplete signing setup. Configure all of SIGNING_KEY, KEY_ALIAS, KEY_STORE_PASSWORD, and KEY_PASSWORD in repository Actions secrets."
             exit 1
+          fi
+
+          if [ "$provided" -eq 4 ]; then
+            echo "has_signing=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_signing=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 17. Build Release APK
+      - name: Build Release APK
+        working-directory: android
+        run: |
+          set -euo pipefail
+
+          if [ "${{ steps.validate_signing.outputs.has_signing }}" = "true" ]; then
+            ./gradlew assembleRelease --no-daemon --stacktrace
+          else
+            if ! ./gradlew assembleRelease --no-daemon --stacktrace; then
+              echo "::error::Release APK build failed. If your Android release build requires signing, configure SIGNING_KEY, KEY_ALIAS, KEY_STORE_PASSWORD, and KEY_PASSWORD secrets."
+              exit 1
+            fi
           fi
 
       # 18. Sign Release APK (optional)
       - name: Sign Release APK
-        if: ${{ secrets.SIGNING_KEY != '' && secrets.KEY_ALIAS != '' && secrets.KEY_STORE_PASSWORD != '' && secrets.KEY_PASSWORD != '' }}
+        if: ${{ steps.validate_signing.outputs.has_signing == 'true' }}
         id: sign_release
         uses: r0adkll/sign-android-release@v1
         with:
@@ -502,7 +518,7 @@ jobs:
 
       # 19. Build Release AAB
       - name: Build Release AAB
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.include_aab }}
+        if: ${{ steps.validate_signing.outputs.has_signing == 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.include_aab == 'true') }}
         working-directory: android
         run: |
           ./gradlew bundleRelease --no-daemon --stacktrace
@@ -517,7 +533,7 @@ jobs:
 
       # 21. Upload Signed Release APK
       - name: Upload Signed Release APK
-        if: ${{ steps.sign_release.outcome == 'success' }}
+        if: ${{ steps.validate_signing.outputs.has_signing == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: calculator-release-apk
@@ -526,7 +542,7 @@ jobs:
 
       # 22. Upload Unsigned Release APK
       - name: Upload Unsigned Release APK
-        if: ${{ steps.sign_release.outcome != 'success' }}
+        if: ${{ steps.validate_signing.outputs.has_signing != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: calculator-release-apk
@@ -535,7 +551,7 @@ jobs:
 
       # 23. Upload Release AAB
       - name: Upload Release AAB
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.include_aab }}
+        if: ${{ steps.validate_signing.outputs.has_signing == 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.include_aab == 'true') }}
         uses: actions/upload-artifact@v4
         with:
           name: calculator-release-aab
