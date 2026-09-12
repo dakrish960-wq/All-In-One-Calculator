@@ -66,15 +66,32 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          if [ ! -d "android" ]; then
+          had_android_dir=0
+          missing_android_files=0
+
+          if [ -d "android" ]; then
+            had_android_dir=1
+          else
             npx cap add android 2>&1 | tee build-logs/capacitor-add-android.log
-          elif [ ! -f "android/gradlew" ] || [ ! -f "android/app/build.gradle" ] || [ ! -f "android/settings.gradle" ] || [ ! -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
-            echo "::error::Committed android project is incomplete. Restore the missing Android project files before building."
-            exit 1
           fi
 
-          if [ ! -f "android/gradlew" ] || [ ! -f "android/app/build.gradle" ] || [ ! -f "android/settings.gradle" ] || [ ! -f "android/gradle/wrapper/gradle-wrapper.properties" ]; then
-            echo "::error::Android platform is incomplete after Capacitor setup."
+          for required_file in \
+            android/gradlew \
+            android/app/build.gradle \
+            android/settings.gradle \
+            android/gradle/wrapper/gradle-wrapper.properties
+          do
+            if [ ! -f "$required_file" ]; then
+              missing_android_files=1
+            fi
+          done
+
+          if [ "$missing_android_files" -ne 0 ]; then
+            if [ "$had_android_dir" -eq 1 ]; then
+              echo "::error::Committed android project is incomplete. Restore the missing Android project files before building."
+            else
+              echo "::error::Android platform is incomplete after Capacitor setup."
+            fi
             exit 1
           fi
 
