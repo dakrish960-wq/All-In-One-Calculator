@@ -55,16 +55,25 @@ jobs:
           set -o pipefail
           npm run build 2>&1 | tee build-logs/web-build.log
 
-      - name: Initialize Capacitor if needed
+      - name: Ensure Capacitor config exists
         run: |
           if [ ! -f "capacitor.config.json" ] && [ ! -f "capacitor.config.ts" ] && [ ! -f "capacitor.config.js" ]; then
-            npx cap init --web-dir=dist com.calculator.allinone "All In One Calculator"
+            echo "::error::Capacitor config is missing. Commit the project config before building Android."
+            exit 1
           fi
 
-      - name: Add Capacitor Android platform
+      - name: Ensure Capacitor Android platform exists
+        shell: bash
         run: |
-          if [ ! -d "android" ]; then
-            npx cap add android
+          set -o pipefail
+          if [ ! -f "android/gradlew" ]; then
+            rm -rf android
+            npx cap add android 2>&1 | tee build-logs/capacitor-add-android.log
+          fi
+
+          if [ ! -f "android/gradlew" ]; then
+            echo "::error::Android platform is incomplete. Expected android/gradlew after Capacitor setup."
+            exit 1
           fi
 
       - name: Sync Capacitor Android
